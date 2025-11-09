@@ -1,10 +1,11 @@
-const CACHE_NAME = 'control-gastos-cache-v1';
+const CACHE_NAME = 'control-gastos-cache-v2';
 // Lista de archivos base para que la app funcione offline.
 const urlsToCache = [
   './',
-  './controlgastos.html',
-  './icon-192.png',
-  './icon-512.png',
+  'controlgastos.html', // Sin el ./
+  'icon-192.png',       // Sin el ./
+  'icon-512.png',       // Sin el ./
+  'manifest.json',      // ¡Añadido!
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css',
   'https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js',
   'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0'
@@ -68,4 +69,5 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
+
 });
