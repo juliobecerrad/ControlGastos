@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="appTitle">Control de Gastos (v3.8 - Corregido)</title> 
+    <title id="appTitle">Control de Gastos (v4.0 - CSV ;)</title> 
     
     <meta name="theme-color" content="#007bff">
     
@@ -21,7 +21,7 @@
         :root {
             --primary-color: #007bff;
             --primary-dark: #0056b3;
-            --secondary-color: #1d2831;
+            --secondary-color: #6c757d;
             --success-color: #28a745;
             --danger-color: #dc3545;
             --warning-color: #ffc107;
@@ -166,21 +166,23 @@
             color: var(--table-total-border); 
         }
         
-        /* INICIO: PUNTO 2 (Ancho Columna) */
-        /* Aplicado solo a las tablas de resumen (Mensual/Histórico) */
         #tablaResumenMensual th:nth-child(1), #tablaResumenMensual td:nth-child(1),
         #tablaResumenHistorico th:nth-child(1), #tablaResumenHistorico td:nth-child(1) { 
-            width: 50%; /* Categoría */
+            width: 50%; 
         }
         #tablaResumenMensual th:nth-child(2), #tablaResumenMensual td:nth-child(2),
         #tablaResumenHistorico th:nth-child(2), #tablaResumenHistorico td:nth-child(2) { 
-            width: 35%; /* Total */
+            width: 35%; 
         }
         #tablaResumenMensual th:nth-child(3), #tablaResumenMensual td:nth-child(3),
         #tablaResumenHistorico th:nth-child(3), #tablaResumenHistorico td:nth-child(3) { 
-            width: 15%; /* % */
+            width: 15%; 
         }
-        /* FIN: PUNTO 2 */
+        
+        .tabla-gastos th[data-lang-key="value"],
+        .tabla-gastos th[data-lang-key="total"] {
+            text-align: right;
+        }
 
         .tabla-gastos td {
              border-bottom: 1px solid #dee2e6;
@@ -193,10 +195,9 @@
             cursor: pointer;
         }
         .tabla-gastos .gasto-valor {
-            /* font-weight: 600; <-- Eliminado (Punto 2) */
             text-align: right;
             color: var(--text-dark);
-            white-space: nowrap; /* Evitar corte */
+            white-space: nowrap; 
         }
         
         .tabla-gastos .gasto-categoria-abbr {
@@ -207,13 +208,11 @@
             color: var(--text-dark); 
         }
         
-        /* INICIO: CORRECCIÓN PUNTO 2 (Color y Tamaño) */
         .tabla-gastos .gasto-categoria-subtexto {
-            font-size: 0.78em; /* Ajustado */
+            font-size: 0.78em; 
             color: var(--secondary-color); /* Gris oscuro */
             margin-top: 2px;
         }
-        /* FIN: CORRECCIÓN PUNTO 2 */
         
         .tabla-gastos .gasto-percent {
             text-align: right;
@@ -991,6 +990,7 @@
             actualizarSugerenciasDescripciones(descripcionesUsadas);
         }
 
+        // --- INICIO: CORRECCIÓN PUNTO 3 (Importar Categorías) ---
         function cargarConfig() {
             const defaultConfig = {
                 moneda: '$', 
@@ -999,14 +999,18 @@
             };
             let loadedConfig = JSON.parse(localStorage.getItem('config_v2'));
             
+            // Si hay un config guardado Y tiene la propiedad 'categorias' (incluso si está vacía)
             if (loadedConfig && Array.isArray(loadedConfig.categorias)) {
                 config = { ...defaultConfig, ...loadedConfig }; 
             } else if (loadedConfig) {
+                // Si existe config pero 'categorias' no es un array (p.ej. de un backup corrupto)
                 config = { ...loadedConfig, categorias: defaultConfig.categorias };
             } else {
                 config = defaultConfig; 
             }
         }
+        // --- FIN: CORRECCIÓN PUNTO 3 ---
+        
         function guardarConfig() {
             config.moneda = document.getElementById('configMoneda').value;
             config.idioma = document.getElementById('configIdioma').value;
@@ -1025,20 +1029,28 @@
 
         function parsearValor(valorString) {
             if (!valorString) return NaN;
+            // Reemplaza la coma decimal (común en 'es') por un punto
             return parseFloat(valorString.replace(',', '.'));
         }
         
+        // --- INICIO: PUNTO 3 (Formato Moneda) ---
         function formatearMoneda(valor) {
             if (typeof valor !== 'number' || isNaN(valor)) valor = 0;
+            
+            // Usar 'es-EC' (Ecuador) para forzar la coma, pero Intl es más robusto
             const idiomaLocal = config.idioma === 'es' ? 'es-EC' : 'en-US';
             
+            // Formatear a 2 decimales fijos
             let valorFormateado = (valor).toLocaleString(idiomaLocal, {
                 minimumFractionDigits: 2,
-                maximumFractionDigits: 2
+                maximumFractionDigits: 2,
+                useGrouping: false // Quitar separador de miles para formato simple
             });
             
+            // Poner el símbolo al inicio
             return `${config.moneda} ${valorFormateado}`;
         }
+        // --- FIN: PUNTO 3 ---
 
         function agregarGasto() {
             const fecha = document.getElementById('gastoFecha').value;
@@ -1117,6 +1129,7 @@
                 total += g.valor;
                 const tr = document.createElement('tr');
                 tr.onclick = () => abrirModalEdicion(g.id);
+                // INICIO: PUNTO 1 (Tabla Gasto)
                 tr.innerHTML = `
                     <td>${formatearFecha(g.fecha)}</td>
                     <td>
@@ -1124,6 +1137,7 @@
                         <div class="gasto-categoria-subtexto">${g.categoria}</div>
                     </td>
                     <td class="gasto-valor">${formatearMoneda(g.valor)}</td>`;
+                // FIN: PUNTO 1
                 tbody.appendChild(tr);
             });
             document.getElementById('totalUltimosGastos').textContent = formatearMoneda(total);
@@ -1199,11 +1213,13 @@
             
             document.getElementById('detalleHistorico').style.display = 'none';
             
+            // INICIO: PUNTO 2 (Ocultar dona si hay filtro)
             if(filtroCategoriaHistorico === 'TODOS') {
                 document.getElementById('chartHistoricoContainer').style.display = 'block';
             } else {
                 document.getElementById('chartHistoricoContainer').style.display = 'none';
             }
+            // FIN: PUNTO 2
             document.getElementById('chartHistoricoMesesContainer').style.display = 'block'; 
             
             const anio = document.getElementById('filtroAnioHistorico').value;
@@ -1684,12 +1700,14 @@
 
             if (gastosAExportar.length === 0) { alert(TRADUCTIONS[config.idioma].alertNoExport); return; }
 
-            let csvContent = "Fecha,Categoria,Descripcion,Valor,TipoPago,ID\n";
+            // INICIO: CORRECCIÓN PUNTO 3 (Separador ;)
+            let csvContent = "Fecha;Categoria;Descripcion;Valor;TipoPago;ID\n";
             gastosAExportar.sort(sortData).forEach(g => { 
-                const desc = g.descripcion.replace(/,/g, " "); 
+                const desc = g.descripcion.replace(/;/g, " ").replace(/,/g, " "); // Limpiar comas y punto y comas
                 const valorConComa = (g.valor).toFixed(2).replace('.', ',');
-                csvContent += `${g.fecha},${g.categoria},${desc},${valorConComa},${g.tipoPago},${g.id}\n`;
+                csvContent += `${g.fecha};${g.categoria};${desc};${valorConComa};${g.tipoPago};${g.id}\n`;
             });
+            // FIN: CORRECCIÓN PUNTO 3
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8,' });
             const file = new File([blob], nombreArchivo, { type: 'text/csv' });
@@ -1740,16 +1758,18 @@
                         const datosImportados = []; 
                         for (let i = 1; i < lineas.length; i++) {
                             const linea = lineas[i].trim(); if (linea === "") continue;
-                            const columnas = linea.split(',');
+                            
+                            // INICIO: CORRECCIÓN PUNTO 3 (Separador ;)
+                            const columnas = linea.split(';');
                             if (columnas.length < 6) continue; 
                             
-                            const id = parseInt(columnas[columnas.length - 1], 10);
-                            const tipoPago = columnas[columnas.length - 2] || 'Contado';
-                            const valor = parsearValor(columnas[columnas.length - 3]); 
                             const fecha = columnas[0];
                             const categoria = columnas[1];
-                            const descPartes = columnas.slice(2, columnas.length - 3);
-                            const descripcion = descPartes.join(',').replace(/"/g, ''); 
+                            const descripcion = columnas[2];
+                            const valor = parsearValor(columnas[3]); 
+                            const tipoPago = columnas[4] || 'Contado';
+                            const id = parseInt(columnas[5], 10);
+                            // FIN: CORRECCIÓN PUNTO 3
 
                             if (!isNaN(id) && !isNaN(valor) && !gastos.find(g => g.id === id)) { 
                                  datosImportados.push({ id, fecha, categoria, descripcion, valor, tipoPago });
