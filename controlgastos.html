@@ -21,7 +21,7 @@
         :root {
             --primary-color: #007bff;
             --primary-dark: #0056b3;
-            --secondary-color: #6c757d;
+            --secondary-color: #1d2831;
             --success-color: #28a745;
             --danger-color: #dc3545;
             --warning-color: #ffc107;
@@ -166,6 +166,22 @@
             color: var(--table-total-border); 
         }
         
+        /* INICIO: PUNTO 2 (Ancho Columna) */
+        /* Aplicado solo a las tablas de resumen (Mensual/Histórico) */
+        #tablaResumenMensual th:nth-child(1), #tablaResumenMensual td:nth-child(1),
+        #tablaResumenHistorico th:nth-child(1), #tablaResumenHistorico td:nth-child(1) { 
+            width: 50%; /* Categoría */
+        }
+        #tablaResumenMensual th:nth-child(2), #tablaResumenMensual td:nth-child(2),
+        #tablaResumenHistorico th:nth-child(2), #tablaResumenHistorico td:nth-child(2) { 
+            width: 35%; /* Total */
+        }
+        #tablaResumenMensual th:nth-child(3), #tablaResumenMensual td:nth-child(3),
+        #tablaResumenHistorico th:nth-child(3), #tablaResumenHistorico td:nth-child(3) { 
+            width: 15%; /* % */
+        }
+        /* FIN: PUNTO 2 */
+
         .tabla-gastos td {
              border-bottom: 1px solid #dee2e6;
         }
@@ -177,9 +193,10 @@
             cursor: pointer;
         }
         .tabla-gastos .gasto-valor {
-            font-weight: 600;
+            /* font-weight: 600; <-- Eliminado (Punto 2) */
             text-align: right;
             color: var(--text-dark);
+            white-space: nowrap; /* Evitar corte */
         }
         
         .tabla-gastos .gasto-categoria-abbr {
@@ -189,6 +206,14 @@
             text-transform: none; 
             color: var(--text-dark); 
         }
+        
+        /* INICIO: CORRECCIÓN PUNTO 2 (Color y Tamaño) */
+        .tabla-gastos .gasto-categoria-subtexto {
+            font-size: 0.78em; /* Ajustado */
+            color: var(--secondary-color); /* Gris oscuro */
+            margin-top: 2px;
+        }
+        /* FIN: CORRECCIÓN PUNTO 2 */
         
         .tabla-gastos .gasto-percent {
             text-align: right;
@@ -202,6 +227,7 @@
         .tabla-gastos tfoot td {
             border-bottom: none;
             color: var(--table-total-border);
+            white-space: nowrap; 
         }
         .tabla-gastos tfoot .gasto-valor {
             color: var(--table-total-border);
@@ -394,7 +420,7 @@
             </div>
             <div class="form-group">
                 <label id="labelGastoValor" for="gastoValor">Valor:</label>
-                <input type="number" id="gastoValor" placeholder="0.00" required>
+                <input type="text" id="gastoValor" placeholder="0,00" inputmode="decimal" required>
             </div>
             <label id="labelTipoPago">Tipo de Pago:</label>
             <div class="payment-type-group">
@@ -413,11 +439,15 @@
         <div class="table-info-alert" data-lang-key="alertClickEdit">Clic en la fila para editar o eliminar.</div>
         <table id="tablaUltimosGastos" class="tabla-gastos">
             <thead>
-                <tr><th data-lang-key="date">Fecha</th><th data-lang-key="cat">Cat.</th><th data-lang-key="desc">Descripción</th><th data-lang-key="value">Valor</th></tr>
+                <tr>
+                    <th data-lang-key="date" style="width: 20%;">Fecha</th>
+                    <th data-lang-key="desc">Descripción</th>
+                    <th data-lang-key="value" style="width: 30%; text-align: right;">Valor</th>
+                </tr>
             </thead>
             <tbody></tbody>
             <tfoot>
-                <tr><td colspan="3" data-lang-key="totalSum">TOTAL</td><td id="totalUltimosGastos" class="gasto-valor"></td></tr>
+                <tr><td colspan="2" data-lang-key="totalSum">TOTAL</td><td id="totalUltimosGastos" class="gasto-valor"></td></tr>
             </tfoot>
         </table>
     </div>
@@ -483,7 +513,7 @@
     <div id="historico" class="pantalla">
         <h2 id="titleResumenHistorico">Resumen Histórico</h2>
         <div class="filtro-container-inline">
-            <select id="filtroAnioHistorico" onchange="actualizarResumenHistorico()"></select>
+            <select id="filtroAnioHistorico" onchange="actualizarResumenHistorico(true)"></select>
         </div>
 
         <label id="labelFiltroTipoPagoHistorico" data-lang-key="paymentTypeTotal">Tipo de Pago (Gastos):</label>
@@ -596,7 +626,9 @@
             <div class="form-group"><label for="modalFecha">Fecha:</label><input type="date" id="modalFecha" required></div>
             <div class="form-group"><label for="modalCategoria">Categoría:</label><select id="modalCategoria" required></select></div>
             <div class="form-group"><label for="modalDescripcion">Descripción:</label><input type="text" id="modalDescripcion" list="sugerenciasDescripcionesModal" placeholder="Ej: Café, Supermercado" required><datalist id="sugerenciasDescripcionesModal"></datalist></div>
-            <div class="form-group"><label for="modalValor">Valor:</label><input type="number" id="modalValor" placeholder="0.00" required></div>
+            <div class="form-group"><label for="modalValor">Valor:</label>
+                <input type="text" id="modalValor" placeholder="0,00" inputmode="decimal" required>
+            </div>
             <label>Tipo de Pago:</label>
             <div class="payment-type-group">
                 <input type="radio" id="modalPagoContado" name="modalTipoPago" value="Contado" checked><label for="modalPagoContado"><i class="fas fa-money-bill-wave"></i> Contado</label>
@@ -640,7 +672,7 @@
         // Diccionario de traducciones
         const TRADUCTIONS = {
             es: {
-                appTitle: "Control de Gastos (v3.8)",
+                appTitle: "Control de Gastos (v3.9)",
                 logoTitle: "Control de Gastos",
                 navExpense: "Gasto", navMonthly: "Mensual", navHistory: "Histórico", navConfig: "Config",
                 titleIngresoGasto: "Ingreso de Gasto", 
@@ -683,7 +715,7 @@
                 alertGuardado: "¡Guardado!",
             },
             en: { 
-                appTitle: "Expense Tracker (v3.8)",
+                appTitle: "Expense Tracker (v3.9)",
                 logoTitle: "Expense Tracker",
                 navExpense: "Expense", navMonthly: "Monthly", navHistory: "History", navConfig: "Config",
                 titleIngresoGasto: "Expense Entry", 
@@ -736,6 +768,7 @@
         
         let filtroPagoMensual = 'TODOS'; 
         let filtroPagoHistorico = 'TODOS';
+        let filtroCategoriaHistorico = 'TODOS'; 
         
         let chartMensualInstance = null;
         let chartHistoricoInstance = null;
@@ -804,16 +837,22 @@
 
         function updateTableHeadersAndFooters() {
              const t = TRADUCTIONS[config.idioma];
-             document.getElementById('tablaUltimosGastos').querySelector('thead').innerHTML = `<tr><th>${t.date}</th><th>${t.cat}</th><th>${t.desc}</th><th>${t.value}</th></tr>`;
-             document.getElementById('tablaUltimosGastos').querySelector('tfoot td:first-child').textContent = t.totalSum;
-             document.getElementById('tablaResumenMensual').querySelector('thead').innerHTML = `<tr><th>${t.category}</th><th>${t.total}</th><th class="gasto-percent">${t.percent}</th></tr>`;
-             document.getElementById('tablaResumenMensual').querySelector('tfoot td:first-child').textContent = t.totalSum;
-             document.getElementById('tablaDetalleMensual').querySelector('thead').innerHTML = `<tr><th>${t.date}</th><th>${t.desc}</th><th>${t.value}</th></tr>`;
+             // INICIO: CORRECCIÓN PUNTO 1 (Alineación Header)
+             document.getElementById('tablaUltimosGastos').querySelector('thead').innerHTML = `<tr><th style="width: 20%;">${t.date}</th><th>${t.desc}</th><th style="width: 30%; text-align: right;">${t.value}</th></tr>`;
+             document.getElementById('tablaUltimosGastos').querySelector('tfoot tr').innerHTML = `<td colspan="2" data-lang-key="totalSum">${t.totalSum}</td><td id="totalUltimosGastos" class="gasto-valor"></td>`;
+             
+             document.getElementById('tablaResumenMensual').querySelector('thead').innerHTML = `<tr><th style="width: 50%;">${t.category}</th><th style="width: 35%; text-align: right;">${t.total}</th><th style="width: 15%;" class="gasto-percent">${t.percent}</th></tr>`;
+             document.getElementById('tablaResumenMensual').querySelector('tfoot tr').innerHTML = `<td data-lang-key="totalSum">${t.totalSum}</td><td></td><td id="totalResumenMensual" class="gasto-valor"></td>`;
+             
+             document.getElementById('tablaResumenHistorico').querySelector('thead').innerHTML = `<tr><th style="width: 50%;">${t.category}</th><th style="width: 35%; text-align: right;">${t.total}</th><th style="width: 15%;" class="gasto-percent">${t.percent}</th></tr>`;
+             document.getElementById('tablaResumenHistorico').querySelector('tfoot tr').innerHTML = `<td data-lang-key="totalSum">${t.totalSum}</td><td></td><td id="totalResumenHistorico" class="gasto-valor"></td>`;
+             
+             document.getElementById('tablaDetalleMensual').querySelector('thead').innerHTML = `<tr><th>${t.date}</th><th>${t.desc}</th><th style="text-align: right;">${t.value}</th></tr>`;
              document.getElementById('tablaDetalleMensual').querySelector('tfoot td:first-child').textContent = t.totalSum;
-             document.getElementById('tablaResumenHistorico').querySelector('thead').innerHTML = `<tr><th>${t.category}</th><th>${t.total}</th><th class="gasto-percent">${t.percent}</th></tr>`;
-             document.getElementById('tablaResumenHistorico').querySelector('tfoot td:first-child').textContent = t.totalSum;
-             document.getElementById('tablaDetalleHistorico').querySelector('thead').innerHTML = `<tr><th>${t.date}</th><th>${t.desc}</th><th>${t.value}</th></tr>`;
+             document.getElementById('tablaDetalleHistorico').querySelector('thead').innerHTML = `<tr><th>${t.date}</th><th>${t.desc}</th><th style="text-align: right;">${t.value}</th></tr>`;
              document.getElementById('tablaDetalleHistorico').querySelector('tfoot td:first-child').textContent = t.totalSum;
+             // FIN: CORRECCIÓN PUNTO 1
+
              document.getElementById('tablaCategorias').querySelector('thead').innerHTML = `<tr><th>${t.category}</th><th>${t.action}</th></tr>`;
         }
 
@@ -883,10 +922,11 @@
                     actualizarResumenMensual();
                 });
             });
+            
             document.querySelectorAll('input[name="filtroTipoPagoHistorico"]').forEach(radio => {
                 radio.addEventListener('change', (e) => {
                     filtroPagoHistorico = e.target.value;
-                    actualizarResumenHistorico();
+                    actualizarResumenHistorico(true); 
                 });
             });
         }
@@ -919,6 +959,7 @@
                 document.getElementById('filtroAnioHistorico').value = anioActual;
                 filtroPagoHistorico = 'TODOS';
                  if(document.getElementById('filtroPagoTotalHistorico')) document.getElementById('filtroPagoTotalHistorico').checked = true;
+                filtroCategoriaHistorico = 'TODOS'; 
                 actualizarResumenHistorico();
             }
             
@@ -959,11 +1000,11 @@
             let loadedConfig = JSON.parse(localStorage.getItem('config_v2'));
             
             if (loadedConfig && Array.isArray(loadedConfig.categorias)) {
-                config = loadedConfig;
-                if (!config.moneda) config.moneda = defaultConfig.moneda;
-                if (!config.idioma) config.idioma = defaultConfig.idioma;
+                config = { ...defaultConfig, ...loadedConfig }; 
+            } else if (loadedConfig) {
+                config = { ...loadedConfig, categorias: defaultConfig.categorias };
             } else {
-                config = defaultConfig;
+                config = defaultConfig; 
             }
         }
         function guardarConfig() {
@@ -982,11 +1023,28 @@
         // LÓGICA DE GASTOS (CRUD)
         // =================================================================================
 
+        function parsearValor(valorString) {
+            if (!valorString) return NaN;
+            return parseFloat(valorString.replace(',', '.'));
+        }
+        
+        function formatearMoneda(valor) {
+            if (typeof valor !== 'number' || isNaN(valor)) valor = 0;
+            const idiomaLocal = config.idioma === 'es' ? 'es-EC' : 'en-US';
+            
+            let valorFormateado = (valor).toLocaleString(idiomaLocal, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+            
+            return `${config.moneda} ${valorFormateado}`;
+        }
+
         function agregarGasto() {
             const fecha = document.getElementById('gastoFecha').value;
             const categoria = document.getElementById('gastoCategoria').value;
             const descripcion = document.getElementById('gastoDescripcion').value.trim();
-            const valor = parseFloat(document.getElementById('gastoValor').value);
+            const valor = parsearValor(document.getElementById('gastoValor').value);
             const tipoPago = document.querySelector('input[name="tipoPago"]:checked').value;
 
             if (!fecha || !categoria || !descripcion || isNaN(valor) || valor <= 0) {
@@ -1024,11 +1082,6 @@
             renderizarGastosDelMes();
         }
         
-        function formatearMoneda(valor) {
-            if (typeof valor !== 'number' || isNaN(valor)) valor = 0;
-            return `${config.moneda} ${valor.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}`;
-        }
-        
         function formatearFecha(fechaStr) {
             if (!fechaStr) return '??/??';
             try {
@@ -1042,6 +1095,7 @@
         }
         
         function capitalizeFirstLetter(string) {
+            if (!string) return '';
             return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
         }
 
@@ -1063,8 +1117,13 @@
                 total += g.valor;
                 const tr = document.createElement('tr');
                 tr.onclick = () => abrirModalEdicion(g.id);
-                // PUNTO 3: Capitalize
-                tr.innerHTML = `<td>${formatearFecha(g.fecha)}</td><td class="gasto-categoria-abbr">${capitalizeFirstLetter(g.categoria.substring(0, 3))}</td><td>${g.descripcion}</td><td class="gasto-valor">${formatearMoneda(g.valor)}</td>`;
+                tr.innerHTML = `
+                    <td>${formatearFecha(g.fecha)}</td>
+                    <td>
+                        ${g.descripcion}
+                        <div class="gasto-categoria-subtexto">${g.categoria}</div>
+                    </td>
+                    <td class="gasto-valor">${formatearMoneda(g.valor)}</td>`;
                 tbody.appendChild(tr);
             });
             document.getElementById('totalUltimosGastos').textContent = formatearMoneda(total);
@@ -1133,14 +1192,23 @@
         // =================================================================================
         // PANTALLA 3: RESUMEN HISTÓRICO
         // =================================================================================
-        function actualizarResumenHistorico() {
+        function actualizarResumenHistorico(resetCategoria = false) {
+            if (resetCategoria) {
+                filtroCategoriaHistorico = 'TODOS';
+            }
+            
             document.getElementById('detalleHistorico').style.display = 'none';
-            document.getElementById('chartHistoricoContainer').style.display = 'block';
+            
+            if(filtroCategoriaHistorico === 'TODOS') {
+                document.getElementById('chartHistoricoContainer').style.display = 'block';
+            } else {
+                document.getElementById('chartHistoricoContainer').style.display = 'none';
+            }
             document.getElementById('chartHistoricoMesesContainer').style.display = 'block'; 
             
             const anio = document.getElementById('filtroAnioHistorico').value;
             const tipoPagoGasto = filtroPagoHistorico; 
-
+            
             const gastosDelPeriodo = gastos.filter(g => new Date(g.fecha + 'T00:00:00').getFullYear() == anio);
 
             let sumTotalGasto = 0, sumContado = 0, sumTarjeta = 0, sumTransf = 0;
@@ -1160,10 +1228,17 @@
                 gastosFiltrados = gastosFiltrados.filter(g => g.tipoPago === tipoPagoGasto);
             }
             
+            // La tabla de resumen SIEMPRE muestra todas las categorías (filtradas por pago/año)
             renderizarTablaResumen(gastosFiltrados, 'tablaResumenHistorico', 'totalResumenHistorico', (cat) => mostrarDetalleHistorico(cat));
+            // El gráfico de dona también
             actualizarGraficoCategorias(gastosFiltrados, 'chartHistoricoCanvas', 'chartHistoricoInstance');
             
-            actualizarGraficoGastosPorMes(gastosDelPeriodo);
+            // El gráfico de barras SÍ respeta el filtro de categoría
+            let gastosParaGraficoMeses = [...gastosFiltrados];
+            if (filtroCategoriaHistorico !== 'TODOS') {
+                gastosParaGraficoMeses = gastosFiltrados.filter(g => g.categoria === filtroCategoriaHistorico);
+            }
+            actualizarGraficoGastosPorMes(gastosParaGraficoMeses);
         }
         
         function mostrarDetalleHistorico(categoria) {
@@ -1173,6 +1248,11 @@
 
             const anio = document.getElementById('filtroAnioHistorico').value;
             const tipoPagoGasto = filtroPagoHistorico;
+            
+            filtroCategoriaHistorico = categoria;
+            actualizarResumenHistorico(false); // Re-filtrar y re-dibujar todo
+            
+            document.getElementById('chartHistoricoContainer').style.display = 'none';
 
             let gastosCategoria = gastos.filter(g => {
                 const fecha = new Date(g.fecha + 'T00:00:00'); 
@@ -1204,7 +1284,7 @@
                 if (textoFila.toLowerCase().indexOf(filtro) > -1) {
                     filas[i].style.display = "";
                     const celdaValor = filas[i].cells[filas[i].cells.length - 1]; 
-                    const valor = parseFloat(celdaValor.textContent.replace(config.moneda, '').replace(/,/g, '')) || 0;
+                    const valor = parsearValor(celdaValor.textContent.replace(config.moneda, '')) || 0;
                     totalFiltrado += valor;
                 } else {
                     filas[i].style.display = "none";
@@ -1282,7 +1362,7 @@
             }
 
             window[instanceVarName] = new Chart(ctx, {
-                type: 'doughnut', // PUNTO 2
+                type: 'doughnut', 
                 data: { labels, datasets: [{ data, backgroundColor: backgroundColors, borderWidth: 1, borderColor: '#fff' }] },
                 options: {
                     responsive: true, maintainAspectRatio: false,
@@ -1495,7 +1575,7 @@
             document.getElementById('modalFecha').value = gasto.fecha;
             document.getElementById('modalCategoria').value = gasto.categoria;
             document.getElementById('modalDescripcion').value = gasto.descripcion;
-            document.getElementById('modalValor').value = gasto.valor;
+            document.getElementById('modalValor').value = (gasto.valor).toLocaleString(config.idioma, {useGrouping: false, minimumFractionDigits: 2});
             document.querySelector(`input[name="modalTipoPago"][value="${gasto.tipoPago}"]`).checked = true;
             document.getElementById('modalEdicion').style.display = 'block';
         }
@@ -1508,7 +1588,7 @@
             const fecha = document.getElementById('modalFecha').value;
             const categoria = document.getElementById('modalCategoria').value;
             const descripcion = document.getElementById('modalDescripcion').value.trim();
-            const valor = parseFloat(document.getElementById('modalValor').value);
+            const valor = parsearValor(document.getElementById('modalValor').value);
             const tipoPago = document.querySelector('input[name="modalTipoPago"]:checked').value;
             if (!fecha || !categoria || !descripcion || isNaN(valor) || valor <= 0) { alert(TRADUCTIONS[config.idioma].alertMissing); return; }
             const index = gastos.findIndex(g => g.id === gastoEditandoId);
@@ -1569,23 +1649,35 @@
             URL.revokeObjectURL(url);
         }
 
+        function getFechaFormateada() {
+            const d = new Date();
+            const dia = String(d.getDate()).padStart(2, '0');
+            const mes = String(d.getMonth() + 1).padStart(2, '0');
+            const anio = d.getFullYear();
+            return `${dia}-${mes}-${anio}`; // Usar guiones para nombres de archivo
+        }
+
         async function exportarReporteCSV(tipo) { 
             let gastosAExportar = [];
             let nombreArchivo = "gastos_"; 
+            const fechaHoy = getFechaFormateada();
 
             if (tipo === 'mensual') {
                 const mes = document.getElementById('filtroMes').value;
                 const anio = document.getElementById('filtroAnioMensual').value;
+                nombreArchivo = `Gastos_MES_${anio}-${mes}_(${fechaHoy}).csv`;
+                
                 const tipoPago = filtroPagoMensual; 
                 gastosAExportar = gastos.filter(g => { const fecha = new Date(g.fecha + 'T00:00:00'); return fecha.getFullYear() == anio && (fecha.getMonth() + 1) == mes; });
                 if (tipoPago !== 'TODOS') gastosAExportar = gastosAExportar.filter(g => g.tipoPago === tipoPago);
-                nombreArchivo += `${anio}-${mes}_${tipoPago}.csv`;
+                
             } else if (tipo === 'historico') {
                 const anio = document.getElementById('filtroAnioHistorico').value;
+                nombreArchivo = `Gastos_AÑO_${anio}_(${fechaHoy}).csv`;
+                
                 const tipoPago = filtroPagoHistorico;
                 gastosAExportar = gastos.filter(g => new Date(g.fecha + 'T00:00:00').getFullYear() == anio);
                 if (tipoPago !== 'TODOS') gastosAExportar = gastosAExportar.filter(g => g.tipoPago === tipoPago);
-                nombreArchivo += `${anio}_${tipoPago}.csv`;
             } else {
                 return; 
             }
@@ -1595,7 +1687,8 @@
             let csvContent = "Fecha,Categoria,Descripcion,Valor,TipoPago,ID\n";
             gastosAExportar.sort(sortData).forEach(g => { 
                 const desc = g.descripcion.replace(/,/g, " "); 
-                csvContent += `${g.fecha},${g.categoria},${desc},${g.valor},${g.tipoPago},${g.id}\n`;
+                const valorConComa = (g.valor).toFixed(2).replace('.', ',');
+                csvContent += `${g.fecha},${g.categoria},${desc},${valorConComa},${g.tipoPago},${g.id}\n`;
             });
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8,' });
@@ -1610,9 +1703,8 @@
             };
             const jsonString = JSON.stringify(backupCompleto); 
             const blob = new Blob([jsonString], { type: 'application/json' });
-            const hoy = new Date();
-            const fechaArchivo = `${hoy.getFullYear()}${String(hoy.getMonth() + 1).padStart(2, '0')}${String(hoy.getDate()).padStart(2, '0')}`;
-            const nombreArchivo = `backup_gastos_${fechaArchivo}.json`;
+            const fechaHoy = getFechaFormateada();
+            const nombreArchivo = `Gastos_TOTAL_(${fechaHoy}).json`;
             const file = new File([blob], nombreArchivo, { type: 'application/json' });
             
             await compartirArchivo(file, 'Backup Control de Gastos');
@@ -1628,14 +1720,14 @@
                     
                     if (file.name.endsWith('.json')) {
                         const backupData = JSON.parse(texto);
-                        if (backupData.gastos_v2 && backupData.config_v2) {
+                        if (backupData.gastos_v2 && backupData.config_v2 && Array.isArray(backupData.config_v2.categorias)) {
                             gastos = backupData.gastos_v2 || [];
                             config = backupData.config_v2;
                             
                             gastos.sort(sortData);
                             
                             guardarGastos();
-                            localStorage.removeItem('ingresos_v2'); // Purgar
+                            localStorage.removeItem('ingresos_v2'); 
                             localStorage.setItem('config_v2', JSON.stringify(config));
                             alert(t.alertImportSuccessJSON);
                         } else {
@@ -1653,7 +1745,7 @@
                             
                             const id = parseInt(columnas[columnas.length - 1], 10);
                             const tipoPago = columnas[columnas.length - 2] || 'Contado';
-                            const valor = parseFloat(columnas[columnas.length - 3]);
+                            const valor = parsearValor(columnas[columnas.length - 3]); 
                             const fecha = columnas[0];
                             const categoria = columnas[1];
                             const descPartes = columnas.slice(2, columnas.length - 3);
