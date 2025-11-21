@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="appTitle">Control de Gastos (v4.0 - CSV ;)</title> 
+    <title id="appTitle">Control de Gastos (v4.0)</title> 
     
     <meta name="theme-color" content="#007bff">
     
@@ -17,22 +17,22 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     
     <style>
-        /* ESTILOS CSS - COMPACTACIÓN, TABLAS Y PAGOS */
+        /* ESTILOS CSS */
         :root {
             --primary-color: #007bff;
             --primary-dark: #0056b3;
-            --secondary-color: #6c757d;
+            --secondary-color: #6c757d; /* Gris para categoría */
             --success-color: #28a745;
             --danger-color: #dc3545;
             --warning-color: #ffc107;
             --bg-light: #f8f9fa;
             --text-dark: #343a40; 
             --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-            /* Colores para Tablas */
+            /* Colores Tablas */
             --table-total-bg: #d1e7dd; 
             --table-total-border: #0f5132;
             --table-zebra-bg: #f8f9fa; 
-            /* Colores para Tipo de Pago */
+            /* Colores Pago */
             --color-cash: #28a745;
             --color-card: #007bff;
             --color-transfer: #fd7e14;
@@ -51,7 +51,6 @@
             padding-bottom: 70px;
         }
 
-        /* --- TÍTULOS EN AZUL OSCURO --- */
         h2, h3 {
             color: var(--primary-dark);
             text-align: center;
@@ -77,7 +76,6 @@
             margin-right: 5px;
         }
         
-        /* Contenedor de Pantallas */
         .pantalla {
             display: none;
             padding: 20px 20px 100px 20px; 
@@ -86,7 +84,6 @@
             display: block;
         }
 
-        /* Formularios y Controles */
         .form-group {
             margin-bottom: 8px;
         }
@@ -159,6 +156,7 @@
             font-size: 0.9em;
         }
         
+        /* Encabezado color verde claro */
         .tabla-gastos th {
             background-color: var(--table-total-bg); 
             font-weight: 600;
@@ -166,24 +164,6 @@
             color: var(--table-total-border); 
         }
         
-        #tablaResumenMensual th:nth-child(1), #tablaResumenMensual td:nth-child(1),
-        #tablaResumenHistorico th:nth-child(1), #tablaResumenHistorico td:nth-child(1) { 
-            width: 50%; 
-        }
-        #tablaResumenMensual th:nth-child(2), #tablaResumenMensual td:nth-child(2),
-        #tablaResumenHistorico th:nth-child(2), #tablaResumenHistorico td:nth-child(2) { 
-            width: 35%; 
-        }
-        #tablaResumenMensual th:nth-child(3), #tablaResumenMensual td:nth-child(3),
-        #tablaResumenHistorico th:nth-child(3), #tablaResumenHistorico td:nth-child(3) { 
-            width: 15%; 
-        }
-        
-        .tabla-gastos th[data-lang-key="value"],
-        .tabla-gastos th[data-lang-key="total"] {
-            text-align: right;
-        }
-
         .tabla-gastos td {
              border-bottom: 1px solid #dee2e6;
         }
@@ -208,6 +188,7 @@
             color: var(--text-dark); 
         }
         
+        /* Estilo categoría debajo descripción */
         .tabla-gastos .gasto-categoria-subtexto {
             font-size: 0.78em; 
             color: var(--secondary-color); /* Gris oscuro */
@@ -237,7 +218,7 @@
             white-space: nowrap; 
         }
 
-        /* TIPO DE PAGO ESTILOS CON COLORES */
+        /* TIPO DE PAGO ESTILOS */
         .payment-type-group {
             display: flex;
             justify-content: space-around;
@@ -295,7 +276,7 @@
             color: var(--primary-dark);
         }
         
-        /* NAVEGACIÓN (NAV-TABS) */
+        /* NAVEGACIÓN */
         .nav-tabs {
             position: fixed;
             bottom: 0;
@@ -331,7 +312,7 @@
         .nav-tabs button.active i { color: var(--primary-color); }
         .nav-tabs button.active { color: var(--primary-color); font-weight: bold; }
         
-        /* DETALLE DE TABLA (Pantallas 2 y 3) */
+        /* DETALLES Y GRAFICOS */
         #detalleMensual, #detalleHistorico {
             margin-top: 20px;
             background-color: white;
@@ -356,7 +337,6 @@
             box-shadow: var(--shadow-sm);
         }
         
-        /* Estilos para Mes y Año en una sola línea */
         .filtro-container-inline {
             display: flex;
             gap: 10px;
@@ -366,7 +346,6 @@
             flex-grow: 1;
         }
 
-        /* AVISO PARA CLIC EN TABLAS */
         .table-info-alert {
             background-color: #e9ecef;
             color: var(--secondary-color);
@@ -388,11 +367,38 @@
         @keyframes animatetop { from {top: -300px; opacity: 0} to {top: 0; opacity: 1} }
         .close-btn { color: #aaa; float: right; font-size: 28px; font-weight: bold; }
         .close-btn:hover, .close-btn:focus { color: #000; text-decoration: none; cursor: pointer; }
-        #modal-botones-edicion, #modal-botones-categoria, #modal-botones-ingreso { display: flex; gap: 10px; margin-top: 15px; }
-        #modal-botones-edicion button, #modal-botones-categoria button, #modal-botones-ingreso button { flex-grow: 1; margin-top: 0; }
-        #btnModalGuardar, #btnModalGuardarCategoria, #btnModalGuardarIngreso { background-color: var(--success-color); }
-        #btnModalEliminar, #btnModalEliminarIngreso { background-color: var(--danger-color); }
-        #btnModalCancelar, #btnModalCancelarCategoria, #btnModalCancelarIngreso { background-color: var(--secondary-color); }
+        #modal-botones-edicion, #modal-botones-categoria, #modal-botones-confirmar { display: flex; gap: 10px; margin-top: 15px; }
+        #modal-botones-edicion button, #modal-botones-categoria button, #modal-botones-confirmar button { flex-grow: 1; margin-top: 0; }
+        #btnModalGuardar, #btnModalGuardarCategoria, #btnConfirmarAceptar { background-color: var(--success-color); }
+        #btnModalEliminar { background-color: var(--danger-color); }
+        #btnModalCancelar, #btnModalCancelarCategoria, #btnConfirmarCancelar { background-color: var(--secondary-color); }
+
+        /* --- TOAST --- */
+        #toast {
+            display: none;
+            position: fixed;
+            bottom: 80px; 
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 20px;
+            border-radius: 25px;
+            background-color: #333;
+            color: white;
+            font-size: 0.9em;
+            z-index: 200;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.3s, bottom 0.3s;
+        }
+        #toast.show {
+            display: block;
+            opacity: 1;
+            bottom: 90px;
+        }
+        #toast.success { background-color: var(--success-color); }
+        #toast.error { background-color: var(--danger-color); }
+        #toast.warning { background-color: var(--warning-color); color: #333; }
+        #toast.info { background-color: var(--primary-color); }
 
     </style>
 </head>
@@ -436,6 +442,7 @@
         </div>
         <h2 id="titleUltimosGastos" style="text-align: center; margin-top: 30px; font-size: 1.2em;">Gastos del Mes</h2>
         <div class="table-info-alert" data-lang-key="alertClickEdit">Clic en la fila para editar o eliminar.</div>
+        
         <table id="tablaUltimosGastos" class="tabla-gastos">
             <thead>
                 <tr>
@@ -605,10 +612,10 @@
         <h3 id="titleUtilidadesDatos" style="margin-top: 40px;">Utilidades de Datos</h3>
         
         <button class="btn btn-success" id="btnBackupShare" onclick="compartirBackupJSON()">⬆️ Crear Backup (Compartir)</button>
-        <input type="file" id="inputImportar" accept=".csv,.json" style="display: none;">
+        <input type="file" id="inputImportar" accept=".csv,.json,.txt,.bak" style="display: none;">
         <button class="btn btn-primary" id="btnImport" onclick="document.getElementById('inputImportar').click()">⬇️ Importar Datos (CSV/JSON)</button>
         
-        <button class="btn btn-danger" id="btnDeleteAll" onclick="limpiarTodosLosDatos()">⚠️ Eliminar TODOS los Datos</button>
+        <button class="btn btn-danger" id="btnDeleteAll" onclick="confirmarLimpiarTodosLosDatos()">⚠️ Eliminar TODOS los Datos</button>
     </div>
 
     <div class="nav-tabs">
@@ -636,7 +643,7 @@
             </div>
             <div id="modal-botones-edicion">
                 <button class="btn" id="btnModalGuardar" onclick="guardarEdicionDesdeModal()">Guardar</button>
-                <button class="btn" id="btnModalEliminar" onclick="eliminarGastoDesdeModal()">Eliminar</button>
+                <button class="btn" id="btnModalEliminar" onclick="confirmarEliminarGasto()">Eliminar</button>
                 <button class="btn" id="btnModalCancelar" onclick="cerrarModal()">Cancelar</button>
             </div>
         </div>
@@ -656,6 +663,19 @@
             </div>
         </div>
     </div>
+    
+    <div id="toast"></div>
+
+    <div id="modalConfirmacion" class="modal">
+        <div class="modal-content">
+            <h2 id="modalConfirmTitle" style="color: var(--primary-dark); margin-top: 0;">Confirmar</h2>
+            <p id="modalConfirmBody">¿Está seguro?</p>
+            <div id="modal-botones-confirmar">
+                <button class="btn" id="btnConfirmarAceptar" onclick="ejecutarConfirmacion()">Aceptar</button>
+                <button class="btn" id="btnConfirmarCancelar" onclick="cerrarModalConfirmacion()">Cancelar</button>
+            </div>
+        </div>
+    </div>
 
 <script>
         // =================================================================================
@@ -671,7 +691,7 @@
         // Diccionario de traducciones
         const TRADUCTIONS = {
             es: {
-                appTitle: "Control de Gastos (v3.9)",
+                appTitle: "Control de Gastos (v4.0)",
                 logoTitle: "Control de Gastos",
                 navExpense: "Gasto", navMonthly: "Mensual", navHistory: "Histórico", navConfig: "Config",
                 titleIngresoGasto: "Ingreso de Gasto", 
@@ -692,29 +712,39 @@
                 labelConfigMoneda: "Símbolo de Moneda:",
                 labelConfigIdioma: "Idioma de la Aplicación:",
                 titleGestionCategorias: "Gestión de Categorías", btnAddCategory: "Añadir Categoría", titleUtilidadesDatos: "Utilidades de Datos",
-                btnExportAll: "⬆️ Crear Backup (Compartir)", btnImport: "⬇️ Importar Datos (CSV/JSON)", btnDeleteAll: "⚠️ Eliminar TODOS los Datos",
+                btnExportAll: "⬆️ Crear Backup (Compartir)", btnImport: "⬇️ Importar Datos",
+                btnDeleteAll: "⚠️ Eliminar TODOS los Datos",
                 detail: "Detalle Gasto",
-                alertMissing: "Por favor, rellena todos los campos correctamente.", alertFoundError: "Error al encontrar el gasto para editar.",
-                alertValueInvalid: "Por favor, ingrese un valor válido.", confirmDelete: "¿Está seguro de que desea eliminar este gasto?",
+                alertMissing: "Por favor, rellena todos los campos.",
+                alertFoundError: "Error al encontrar el gasto para editar.",
+                alertValueInvalid: "Por favor, ingrese un valor válido.", 
+                confirmDelete: "¿Está seguro de que desea eliminar este gasto?",
                 confirmDeleteAll: "ADVERTENCIA: ¿Está seguro de que desea eliminar TODOS sus gastos y configuraciones? Esta acción es irreversible.",
-                alertNoExport: "No hay datos para exportar en este filtro.", alertCSVEmpty: "El archivo CSV está vacío o no tiene datos.",
-                alertCSVError: "Error al procesar el archivo CSV. Asegúrate de que el formato sea correcto.",
+                alertNoExport: "No hay datos para exportar en este filtro.", 
+                alertCSVEmpty: "El archivo CSV está vacío o no tiene datos.",
+                alertCSVError: "Error al procesar el archivo CSV.",
                 alertImportSuccess: (count) => `Éxito! Se han importado ${count} registros de gastos (CSV).`,
                 alertImportSuccessJSON: "¡Éxito! Se ha restaurado el backup.",
-                alertImportErrorJSON: "Error al restaurar el backup. El archivo JSON parece corrupto o no tiene el formato esperado.",
+                alertImportErrorJSON: "Error al restaurar el backup. El archivo no es válido.",
                 alertClickEdit: "Clic en la fila para editar o eliminar.",
                 alertClickDetail: "Clic en la fila para ver el detalle.",
                 modalTitle: "Editar Gasto",
                 modalSave: "Guardar", modalDelete: "Eliminar", modalCancel: "Cancelar",
-                alertBackup: "¡Recordatorio! 🗓️ Es un buen día (1ro o 15) para hacer una copia de seguridad.\n\nVe a Configuración ⚙️ > Crear Backup.",
+                alertBackup: "¡Recordatorio! 🗓️ Es un buen día para hacer una copia de seguridad.",
                 modalTitleCategoria: "Renombrar Categoría",
                 alertCatNombreVacio: "El nombre de la categoría no puede estar vacío.",
                 alertCatNombreExiste: (nombre) => `La categoría "${nombre}" ya existe.`,
-                alertCatNoSePuedeBorrar: (nombre) => `No se puede borrar la categoría "${nombre}" porque tiene gastos asociados. Reasígnelos o bórrelos primero.`,
+                alertCatNoSePuedeBorrar: (nombre) => `No se puede borrar "${nombre}", tiene gastos asociados.`,
                 alertGuardado: "¡Guardado!",
+                toastGastoEliminado: "Gasto eliminado.",
+                toastCategoriaGuardada: "Categoría guardada.",
+                toastCategoriaEliminada: "Categoría eliminada.",
+                modalConfirmTitle: "Confirmar Acción",
+                modalConfirmDeleteCat: (nombre) => `¿Está seguro de que desea eliminar la categoría "${nombre}"?`,
+                btnAceptar: "Aceptar",
             },
             en: { 
-                appTitle: "Expense Tracker (v3.9)",
+                appTitle: "Expense Tracker (v4.0)",
                 logoTitle: "Expense Tracker",
                 navExpense: "Expense", navMonthly: "Monthly", navHistory: "History", navConfig: "Config",
                 titleIngresoGasto: "Expense Entry", 
@@ -735,7 +765,8 @@
                 labelConfigMoneda: "Currency Symbol:",
                 labelConfigIdioma: "Application Language:",
                 titleGestionCategorias: "Category Management", btnAddCategory: "Add Category", titleUtilidadesDatos: "Data Utilities",
-                btnExportAll: "⬆️ Create Backup (Share)", btnImport: "⬇️ Import Data (CSV/JSON)", btnDeleteAll: "⚠️ Delete ALL Data",
+                btnExportAll: "⬆️ Create Backup (Share)", btnImport: "⬇️ Import Data",
+                btnDeleteAll: "⚠️ Delete ALL Data",
                 detail: "Expense Detail",
                 alertMissing: "Please fill in all fields correctly.", alertFoundError: "Error finding record for editing.",
                 alertValueInvalid: "Please enter a valid amount.", confirmDelete: "Are you sure you want to delete this record?",
@@ -744,17 +775,23 @@
                 alertCSVError: "Error processing CSV file. Ensure the format is correct.",
                 alertImportSuccess: (count) => `Success! Imported ${count} expense records (CSV).`,
                 alertImportSuccessJSON: "Success! The backup has been restored.",
-                alertImportErrorJSON: "Error restoring backup. The JSON file seems corrupt or doesn't have the expected format.",
+                alertImportErrorJSON: "Error restoring backup. The file is invalid.",
                 alertClickEdit: "Click on the row to edit or delete.",
                 alertClickDetail: "Click on the row to see the detail.",
                 modalTitle: "Edit Expense",
                 modalSave: "Save", modalDelete: "Delete", modalCancel: "Cancel",
-                alertBackup: "Reminder! 🗓️ It's a good day (1st or 15th) to back up your data.\n\nGo to Config ⚙️ > Create Backup.",
+                alertBackup: "Reminder! 🗓️ It's a good day to back up your data.",
                 modalTitleCategoria: "Rename Category",
                 alertCatNombreVacio: "Category name cannot be empty.",
                 alertCatNombreExiste: (nombre) => `The category "${nombre}" already exists.`,
-                alertCatNoSePuedeBorrar: (nombre) => `Cannot delete category "${nombre}" because it has associated expenses. Please reassign or delete them first.`,
+                alertCatNoSePuedeBorrar: (nombre) => `Cannot delete "${nombre}", it has associated expenses.`,
                 alertGuardado: "Saved!",
+                toastGastoEliminado: "Expense deleted.",
+                toastCategoriaGuardada: "Category saved.",
+                toastCategoriaEliminada: "Category deleted.",
+                modalConfirmTitle: "Confirm Action",
+                modalConfirmDeleteCat: (nombre) => `Are you sure you want to delete the category "${nombre}"?`,
+                btnAceptar: "Accept",
             }
         };
 
@@ -773,9 +810,9 @@
         let chartHistoricoInstance = null;
         let chartHistoricoMesesInstance = null;
 
-        // =================================================================================
-        // FUNCIONES DE TRADUCCIÓN
-        // =================================================================================
+        let confirmCallback = null;
+        let toastTimeout = null;
+
         function setLanguage(lang) {
             const t = TRADUCTIONS[lang];
             if (!t) return;
@@ -823,6 +860,9 @@
             document.getElementById('btnModalGuardarCategoria').textContent = t.modalSave;
             document.getElementById('btnModalCancelarCategoria').textContent = t.modalCancel;
             
+            document.getElementById('btnConfirmarAceptar').textContent = t.btnAceptar;
+            document.getElementById('btnConfirmarCancelar').textContent = t.modalCancel;
+            
             document.querySelectorAll('[data-lang-key]').forEach(el => {
                 const key = el.getAttribute('data-lang-key');
                 if (t[key] && typeof t[key] === 'string') {
@@ -836,7 +876,6 @@
 
         function updateTableHeadersAndFooters() {
              const t = TRADUCTIONS[config.idioma];
-             // INICIO: CORRECCIÓN PUNTO 1 (Alineación Header)
              document.getElementById('tablaUltimosGastos').querySelector('thead').innerHTML = `<tr><th style="width: 20%;">${t.date}</th><th>${t.desc}</th><th style="width: 30%; text-align: right;">${t.value}</th></tr>`;
              document.getElementById('tablaUltimosGastos').querySelector('tfoot tr').innerHTML = `<td colspan="2" data-lang-key="totalSum">${t.totalSum}</td><td id="totalUltimosGastos" class="gasto-valor"></td>`;
              
@@ -850,14 +889,42 @@
              document.getElementById('tablaDetalleMensual').querySelector('tfoot td:first-child').textContent = t.totalSum;
              document.getElementById('tablaDetalleHistorico').querySelector('thead').innerHTML = `<tr><th>${t.date}</th><th>${t.desc}</th><th style="text-align: right;">${t.value}</th></tr>`;
              document.getElementById('tablaDetalleHistorico').querySelector('tfoot td:first-child').textContent = t.totalSum;
-             // FIN: CORRECCIÓN PUNTO 1
 
              document.getElementById('tablaCategorias').querySelector('thead').innerHTML = `<tr><th>${t.category}</th><th>${t.action}</th></tr>`;
         }
 
-        // =================================================================================
-        // FUNCIONES DE INICIALIZACIÓN
-        // =================================================================================
+        function mostrarToast(mensaje, tipo = 'info', duracion = 3000) {
+            const toast = document.getElementById('toast');
+            if (toastTimeout) {
+                clearTimeout(toastTimeout);
+            }
+            
+            toast.textContent = mensaje;
+            toast.className = 'show ' + tipo; 
+
+            toastTimeout = setTimeout(() => {
+                toast.className = toast.className.replace('show', '');
+            }, duracion);
+        }
+
+        function mostrarModalConfirmacion(titulo, mensaje, callback) {
+            document.getElementById('modalConfirmTitle').textContent = titulo;
+            document.getElementById('modalConfirmBody').textContent = mensaje;
+            confirmCallback = callback; 
+            document.getElementById('modalConfirmacion').style.display = 'block';
+        }
+
+        function cerrarModalConfirmacion() {
+            document.getElementById('modalConfirmacion').style.display = 'none';
+            confirmCallback = null; 
+        }
+
+        function ejecutarConfirmacion() {
+            if (typeof confirmCallback === 'function') {
+                confirmCallback(); 
+            }
+            cerrarModalConfirmacion();
+        }
 
         document.addEventListener('DOMContentLoaded', inicializarApp);
 
@@ -878,7 +945,7 @@
             const mesActualKey = hoy.getFullYear() + '-' + hoy.getMonth();
             if ((diaDelMes === 1 || diaDelMes === 15) && ultimoRecordatorio !== mesActualKey) {
                 setTimeout(() => {
-                    alert(TRADUCTIONS[config.idioma].alertBackup);
+                    mostrarToast(TRADUCTIONS[config.idioma].alertBackup, 'info', 5000);
                     localStorage.setItem('ultimoRecordatorioBackup', mesActualKey);
                 }, 1500);
             }
@@ -894,23 +961,21 @@
             
             actualizarSugerenciasDescripciones(descripcionesUsadas);
             
-            // --- INICIO: CORRECCIÓN DE ERROR (Cargar combos de fecha) ---
             inicializarSelectoresMesAnio();
-            // --- FIN: CORRECCIÓN DE ERROR ---
             
             renderizarGastosDelMes();
             actualizarResumenMensual();
             actualizarResumenHistorico();
             
-            // Foco en "Gasto" (id="gasto") por defecto
             mostrarPantalla('gasto', document.querySelector('.nav-tabs button[onclick*="gasto"]'));
 
-            // Listeners Modales
             const modalEdicion = document.getElementById('modalEdicion');
             const modalCategoria = document.getElementById('modalEdicionCategoria');
+            const modalConfirm = document.getElementById('modalConfirmacion'); 
             window.onclick = function(event) {
                 if (event.target == modalEdicion) cerrarModal();
                 if (event.target == modalCategoria) cerrarModalCategoria();
+                if (event.target == modalConfirm) cerrarModalConfirmacion(); 
             }
             
             document.getElementById('inputImportar').addEventListener('change', importarDatos); 
@@ -929,10 +994,6 @@
                 });
             });
         }
-
-        // =================================================================================
-        // NAVEGACIÓN
-        // =================================================================================
 
         function mostrarPantalla(id, btn) {
             document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
@@ -964,10 +1025,6 @@
             
             if (id === 'configuracion') renderizarTablaCategorias();
         }
-
-        // =================================================================================
-        // LÓGICA DE DATOS (Storage)
-        // =================================================================================
         
         const sortData = (a, b) => {
             const dateA = new Date(a.fecha).getTime();
@@ -990,7 +1047,6 @@
             actualizarSugerenciasDescripciones(descripcionesUsadas);
         }
 
-        // --- INICIO: CORRECCIÓN PUNTO 3 (Importar Categorías) ---
         function cargarConfig() {
             const defaultConfig = {
                 moneda: '$', 
@@ -999,18 +1055,14 @@
             };
             let loadedConfig = JSON.parse(localStorage.getItem('config_v2'));
             
-            // Si hay un config guardado Y tiene la propiedad 'categorias' (incluso si está vacía)
             if (loadedConfig && Array.isArray(loadedConfig.categorias)) {
                 config = { ...defaultConfig, ...loadedConfig }; 
             } else if (loadedConfig) {
-                // Si existe config pero 'categorias' no es un array (p.ej. de un backup corrupto)
                 config = { ...loadedConfig, categorias: defaultConfig.categorias };
             } else {
                 config = defaultConfig; 
             }
         }
-        // --- FIN: CORRECCIÓN PUNTO 3 ---
-        
         function guardarConfig() {
             config.moneda = document.getElementById('configMoneda').value;
             config.idioma = document.getElementById('configIdioma').value;
@@ -1023,34 +1075,22 @@
             actualizarResumenHistorico();
         }
 
-        // =================================================================================
-        // LÓGICA DE GASTOS (CRUD)
-        // =================================================================================
-
         function parsearValor(valorString) {
             if (!valorString) return NaN;
-            // Reemplaza la coma decimal (común en 'es') por un punto
             return parseFloat(valorString.replace(',', '.'));
         }
         
-        // --- INICIO: PUNTO 3 (Formato Moneda) ---
         function formatearMoneda(valor) {
             if (typeof valor !== 'number' || isNaN(valor)) valor = 0;
-            
-            // Usar 'es-EC' (Ecuador) para forzar la coma, pero Intl es más robusto
             const idiomaLocal = config.idioma === 'es' ? 'es-EC' : 'en-US';
             
-            // Formatear a 2 decimales fijos
             let valorFormateado = (valor).toLocaleString(idiomaLocal, {
                 minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-                useGrouping: false // Quitar separador de miles para formato simple
+                maximumFractionDigits: 2
             });
             
-            // Poner el símbolo al inicio
             return `${config.moneda} ${valorFormateado}`;
         }
-        // --- FIN: PUNTO 3 ---
 
         function agregarGasto() {
             const fecha = document.getElementById('gastoFecha').value;
@@ -1060,13 +1100,14 @@
             const tipoPago = document.querySelector('input[name="tipoPago"]:checked').value;
 
             if (!fecha || !categoria || !descripcion || isNaN(valor) || valor <= 0) {
-                alert(TRADUCTIONS[config.idioma].alertMissing); return;
+                mostrarToast(TRADUCTIONS[config.idioma].alertMissing, 'error'); 
+                return;
             }
             gastos.push({ id: Date.now(), fecha, categoria, descripcion, valor, tipoPago });
             gastos.sort(sortData); 
             guardarGastos();
             
-            inicializarSelectoresMesAnio(); // BUG-01
+            inicializarSelectoresMesAnio(); 
 
             const btn = document.getElementById('btnAddGasto');
             const originalTexto = btn.textContent;
@@ -1111,9 +1152,6 @@
             return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
         }
 
-        // =================================================================================
-        // PANTALLA 1: GASTO Y LISTA GASTOS
-        // =================================================================================
         function renderizarGastosDelMes() {
             const tbody = document.getElementById('tablaUltimosGastos').querySelector('tbody');
             tbody.innerHTML = '';
@@ -1129,7 +1167,6 @@
                 total += g.valor;
                 const tr = document.createElement('tr');
                 tr.onclick = () => abrirModalEdicion(g.id);
-                // INICIO: PUNTO 1 (Tabla Gasto)
                 tr.innerHTML = `
                     <td>${formatearFecha(g.fecha)}</td>
                     <td>
@@ -1137,15 +1174,11 @@
                         <div class="gasto-categoria-subtexto">${g.categoria}</div>
                     </td>
                     <td class="gasto-valor">${formatearMoneda(g.valor)}</td>`;
-                // FIN: PUNTO 1
                 tbody.appendChild(tr);
             });
             document.getElementById('totalUltimosGastos').textContent = formatearMoneda(total);
         }
 
-        // =================================================================================
-        // PANTALLA 2: RESUMEN MENSUAL
-        // =================================================================================
         function actualizarResumenMensual() {
             document.getElementById('detalleMensual').style.display = 'none';
             document.getElementById('chartMensualContainer').style.display = 'block';
@@ -1202,10 +1235,6 @@
             document.getElementById('detalleMensual').scrollIntoView({ behavior: 'smooth' });
         }
 
-
-        // =================================================================================
-        // PANTALLA 3: RESUMEN HISTÓRICO
-        // =================================================================================
         function actualizarResumenHistorico(resetCategoria = false) {
             if (resetCategoria) {
                 filtroCategoriaHistorico = 'TODOS';
@@ -1213,13 +1242,11 @@
             
             document.getElementById('detalleHistorico').style.display = 'none';
             
-            // INICIO: PUNTO 2 (Ocultar dona si hay filtro)
             if(filtroCategoriaHistorico === 'TODOS') {
                 document.getElementById('chartHistoricoContainer').style.display = 'block';
             } else {
                 document.getElementById('chartHistoricoContainer').style.display = 'none';
             }
-            // FIN: PUNTO 2
             document.getElementById('chartHistoricoMesesContainer').style.display = 'block'; 
             
             const anio = document.getElementById('filtroAnioHistorico').value;
@@ -1244,12 +1271,19 @@
                 gastosFiltrados = gastosFiltrados.filter(g => g.tipoPago === tipoPagoGasto);
             }
             
-            // La tabla de resumen SIEMPRE muestra todas las categorías (filtradas por pago/año)
-            renderizarTablaResumen(gastosFiltrados, 'tablaResumenHistorico', 'totalResumenHistorico', (cat) => mostrarDetalleHistorico(cat));
-            // El gráfico de dona también
-            actualizarGraficoCategorias(gastosFiltrados, 'chartHistoricoCanvas', 'chartHistoricoInstance');
+            let gastosParaTabla = [...gastosFiltrados];
+            if (filtroCategoriaHistorico !== 'TODOS') {
+                gastosParaTabla = gastosFiltrados.filter(g => g.categoria === filtroCategoriaHistorico);
+            }
             
-            // El gráfico de barras SÍ respeta el filtro de categoría
+            renderizarTablaResumen(gastosParaTabla, 'tablaResumenHistorico', 'totalResumenHistorico', (cat) => mostrarDetalleHistorico(cat));
+            
+            let gastosParaDona = [...gastosFiltrados];
+            if (filtroCategoriaHistorico !== 'TODOS') {
+                gastosParaDona = gastosFiltrados.filter(g => g.categoria === filtroCategoriaHistorico);
+            }
+            actualizarGraficoCategorias(gastosParaDona, 'chartHistoricoCanvas', 'chartHistoricoInstance');
+            
             let gastosParaGraficoMeses = [...gastosFiltrados];
             if (filtroCategoriaHistorico !== 'TODOS') {
                 gastosParaGraficoMeses = gastosFiltrados.filter(g => g.categoria === filtroCategoriaHistorico);
@@ -1266,7 +1300,7 @@
             const tipoPagoGasto = filtroPagoHistorico;
             
             filtroCategoriaHistorico = categoria;
-            actualizarResumenHistorico(false); // Re-filtrar y re-dibujar todo
+            actualizarResumenHistorico(false); 
             
             document.getElementById('chartHistoricoContainer').style.display = 'none';
 
@@ -1284,11 +1318,6 @@
             document.getElementById('detalleHistorico').scrollIntoView({ behavior: 'smooth' });
         }
 
-
-        // =================================================================================
-        // FUNCIONES COMPARTIDAS (Tablas, Gráficos, Selects)
-        // =================================================================================
-        
         function filtrarTablaDetalle(inputId, tablaId) {
             const filtro = document.getElementById(inputId).value.toLowerCase();
             const tabla = document.getElementById(tablaId);
@@ -1466,10 +1495,6 @@
             selectAnioHistorico.value = anioActual;
         }
 
-        // =================================================================================
-        // PANTALLA 4: CONFIGURACIÓN (Gestión Categorías)
-        // =================================================================================
-        
         function actualizarSelectCategorias() {
             const selects = [document.getElementById('gastoCategoria'), document.getElementById('modalCategoria')];
             selects.forEach(select => {
@@ -1485,20 +1510,16 @@
              });
         }
         
-        function actualizarSugerenciasIngresos(descripciones) {
-             // Purgado
-        }
-
         function renderizarTablaCategorias() {
             const tbody = document.getElementById('tablaCategorias').querySelector('tbody');
             tbody.innerHTML = '';
-            config.categorias.forEach((cat, index) => { // Usar índice
+            config.categorias.forEach((cat, index) => { 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${cat}</td>
                     <td class="td-acciones">
                         <button class="btn btn-primary btn-accion-tabla" onclick="abrirModalCategoria(${index})"><i class="fas fa-pencil-alt"></i></button>
-                        <button class="btn btn-danger btn-accion-tabla" onclick="eliminarCategoria(${index})"><i class="fas fa-trash"></i></button>
+                        <button class="btn btn-danger btn-accion-tabla" onclick="confirmarEliminarCategoria(${index})"><i class="fas fa-trash"></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -1513,7 +1534,7 @@
                 guardarConfig(); actualizarSelectCategorias(); renderizarTablaCategorias();
                 input.value = '';
             } else if (config.categorias.includes(nombre)) {
-                alert(TRADUCTIONS[config.idioma].alertCatNombreExiste(nombre));
+                mostrarToast(TRADUCTIONS[config.idioma].alertCatNombreExiste(nombre), 'error'); 
             }
         }
         
@@ -1535,10 +1556,12 @@
             const nombreNuevo = document.getElementById('modalCategoriaNombre').value.trim();
             
             if (!nombreNuevo) {
-                alert(TRADUCTIONS[config.idioma].alertCatNombreVacio); return;
+                mostrarToast(TRADUCTIONS[config.idioma].alertCatNombreVacio, 'error'); 
+                return;
             }
             if (nombreNuevo !== nombreAntiguo && config.categorias.includes(nombreNuevo)) {
-                alert(TRADUCTIONS[config.idioma].alertCatNombreExiste(nombreNuevo)); return;
+                mostrarToast(TRADUCTIONS[config.idioma].alertCatNombreExiste(nombreNuevo), 'error'); 
+                return;
             }
             
             gastos.forEach(gasto => {
@@ -1561,32 +1584,43 @@
             
             actualizarResumenMensual();
             actualizarResumenHistorico();
+            mostrarToast(TRADUCTIONS[config.idioma].toastCategoriaGuardada, 'success'); 
         }
 
-        function eliminarCategoria(index) { 
+        function confirmarEliminarCategoria(index) { 
             const nombreCategoria = config.categorias[index]; 
-            
             const enUso = gastos.some(gasto => gasto.categoria === nombreCategoria);
             
             if (enUso) {
-                alert(TRADUCTIONS[config.idioma].alertCatNoSePuedeBorrar(nombreCategoria));
+                mostrarToast(TRADUCTIONS[config.idioma].alertCatNoSePuedeBorrar(nombreCategoria), 'error'); 
                 return;
             }
             
+            mostrarModalConfirmacion(
+                TRADUCTIONS[config.idioma].delete, 
+                TRADUCTIONS[config.idioma].modalConfirmDeleteCat(nombreCategoria),
+                () => {
+                    eliminarCategoria(index);
+                }
+            );
+        }
+        
+        function eliminarCategoria(index) {
             if (index > -1) {
                 config.categorias.splice(index, 1);
                 guardarConfig();
                 renderizarTablaCategorias();
                 actualizarSelectCategorias();
+                mostrarToast(TRADUCTIONS[config.idioma].toastCategoriaEliminada, 'success');
             }
         }
 
-        // =================================================================================
-        // MODAL DE EDICIÓN (GASTOS)
-        // =================================================================================
         function abrirModalEdicion(id) { 
             const gasto = gastos.find(g => g.id === id);
-            if (!gasto) { alert(TRADUCTIONS[config.idioma].alertFoundError); return; }
+            if (!gasto) { 
+                mostrarToast(TRADUCTIONS[config.idioma].alertFoundError, 'error'); 
+                return; 
+            }
             gastoEditandoId = id;
             document.getElementById('modalFecha').value = gasto.fecha;
             document.getElementById('modalCategoria').value = gasto.categoria;
@@ -1606,7 +1640,12 @@
             const descripcion = document.getElementById('modalDescripcion').value.trim();
             const valor = parsearValor(document.getElementById('modalValor').value);
             const tipoPago = document.querySelector('input[name="modalTipoPago"]:checked').value;
-            if (!fecha || !categoria || !descripcion || isNaN(valor) || valor <= 0) { alert(TRADUCTIONS[config.idioma].alertMissing); return; }
+            
+            if (!fecha || !categoria || !descripcion || isNaN(valor) || valor <= 0) { 
+                mostrarToast(TRADUCTIONS[config.idioma].alertMissing, 'error'); 
+                return; 
+            }
+            
             const index = gastos.findIndex(g => g.id === gastoEditandoId);
             if (index !== -1) {
                 gastos[index] = { id: gastoEditandoId, fecha, categoria, descripcion, valor, tipoPago };
@@ -1614,24 +1653,32 @@
                 guardarGastos();
             }
             cerrarModal();
+            mostrarToast(TRADUCTIONS[config.idioma].alertGuardado, 'success'); 
             const vistaActiva = document.querySelector('.pantalla.activa').id;
             mostrarPantalla(vistaActiva, document.querySelector(`.nav-tabs button[onclick*="'${vistaActiva}'"]`));
         }
-        function eliminarGastoDesdeModal() { 
+        
+        function confirmarEliminarGasto() {
             if (!gastoEditandoId) return;
-            if (confirm(TRADUCTIONS[config.idioma].confirmDelete)) {
-                gastos = gastos.filter(g => g.id !== gastoEditandoId);
-                guardarGastos();
-                cerrarModal();
-                const vistaActiva = document.querySelector('.pantalla.activa').id;
-                mostrarPantalla(vistaActiva, document.querySelector(`.nav-tabs button[onclick*="'${vistaActiva}'"]`));
-            }
+            
+            mostrarModalConfirmacion(
+                TRADUCTIONS[config.idioma].delete, 
+                TRADUCTIONS[config.idioma].confirmDelete,
+                () => {
+                    eliminarGastoDesdeModal();
+                }
+            );
+        }
+        
+        function eliminarGastoDesdeModal() { 
+            gastos = gastos.filter(g => g.id !== gastoEditandoId);
+            guardarGastos();
+            cerrarModal();
+            mostrarToast(TRADUCTIONS[config.idioma].toastGastoEliminado, 'success');
+            const vistaActiva = document.querySelector('.pantalla.activa').id;
+            mostrarPantalla(vistaActiva, document.querySelector(`.nav-tabs button[onclick*="'${vistaActiva}'"]`));
         }
 
-        // =================================================================================
-        // IMPORTACIÓN / EXPORTACIÓN / BORRADO
-        // =================================================================================
-        
         async function compartirArchivo(archivo, titulo) {
             const t = TRADUCTIONS[config.idioma];
             
@@ -1670,7 +1717,7 @@
             const dia = String(d.getDate()).padStart(2, '0');
             const mes = String(d.getMonth() + 1).padStart(2, '0');
             const anio = d.getFullYear();
-            return `${dia}-${mes}-${anio}`; // Usar guiones para nombres de archivo
+            return `${dia}-${mes}-${anio}`; 
         }
 
         async function exportarReporteCSV(tipo) { 
@@ -1698,16 +1745,17 @@
                 return; 
             }
 
-            if (gastosAExportar.length === 0) { alert(TRADUCTIONS[config.idioma].alertNoExport); return; }
+            if (gastosAExportar.length === 0) { 
+                mostrarToast(TRADUCTIONS[config.idioma].alertNoExport, 'warning'); 
+                return; 
+            }
 
-            // INICIO: CORRECCIÓN PUNTO 3 (Separador ;)
             let csvContent = "Fecha;Categoria;Descripcion;Valor;TipoPago;ID\n";
             gastosAExportar.sort(sortData).forEach(g => { 
-                const desc = g.descripcion.replace(/;/g, " ").replace(/,/g, " "); // Limpiar comas y punto y comas
+                const desc = g.descripcion.replace(/;/g, " ").replace(/,/g, " "); 
                 const valorConComa = (g.valor).toFixed(2).replace('.', ',');
                 csvContent += `${g.fecha};${g.categoria};${desc};${valorConComa};${g.tipoPago};${g.id}\n`;
             });
-            // FIN: CORRECCIÓN PUNTO 3
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8,' });
             const file = new File([blob], nombreArchivo, { type: 'text/csv' });
@@ -1720,10 +1768,10 @@
                 config_v2: config
             };
             const jsonString = JSON.stringify(backupCompleto); 
-            const blob = new Blob([jsonString], { type: 'application/json' });
+            const blob = new Blob([jsonString], { type: 'application/octet-stream' }); 
             const fechaHoy = getFechaFormateada();
-            const nombreArchivo = `Gastos_TOTAL_(${fechaHoy}).json`;
-            const file = new File([blob], nombreArchivo, { type: 'application/json' });
+            const nombreArchivo = `Gastos_TOTAL_(${fechaHoy}).bak`; 
+            const file = new File([blob], nombreArchivo, { type: 'application/octet-stream' });
             
             await compartirArchivo(file, 'Backup Control de Gastos');
         }
@@ -1736,7 +1784,7 @@
                     const texto = e.target.result;
                     const t = TRADUCTIONS[config.idioma];
                     
-                    if (file.name.endsWith('.json')) {
+                    if (file.name.endsWith('.json') || file.name.endsWith('.txt') || file.name.endsWith('.bak')) {
                         const backupData = JSON.parse(texto);
                         if (backupData.gastos_v2 && backupData.config_v2 && Array.isArray(backupData.config_v2.categorias)) {
                             gastos = backupData.gastos_v2 || [];
@@ -1747,7 +1795,7 @@
                             guardarGastos();
                             localStorage.removeItem('ingresos_v2'); 
                             localStorage.setItem('config_v2', JSON.stringify(config));
-                            alert(t.alertImportSuccessJSON);
+                            mostrarToast(t.alertImportSuccessJSON, 'success'); 
                         } else {
                             throw new Error(t.alertImportErrorJSON);
                         }
@@ -1759,8 +1807,7 @@
                         for (let i = 1; i < lineas.length; i++) {
                             const linea = lineas[i].trim(); if (linea === "") continue;
                             
-                            // INICIO: CORRECCIÓN PUNTO 3 (Separador ;)
-                            const columnas = linea.split(';');
+                            const columnas = linea.split(';'); 
                             if (columnas.length < 6) continue; 
                             
                             const fecha = columnas[0];
@@ -1769,7 +1816,6 @@
                             const valor = parsearValor(columnas[3]); 
                             const tipoPago = columnas[4] || 'Contado';
                             const id = parseInt(columnas[5], 10);
-                            // FIN: CORRECCIÓN PUNTO 3
 
                             if (!isNaN(id) && !isNaN(valor) && !gastos.find(g => g.id === id)) { 
                                  datosImportados.push({ id, fecha, categoria, descripcion, valor, tipoPago });
@@ -1782,9 +1828,9 @@
                         gastos.sort(sortData); 
                         guardarGastos(); 
                         guardarConfig(); 
-                        alert(t.alertImportSuccess(datosImportados.length));
+                        mostrarToast(t.alertImportSuccess(datosImportados.length), 'success'); 
                     } else {
-                        throw new Error("Tipo de archivo no soportado (.csv o .json)");
+                        throw new Error("Tipo de archivo no soportado (.csv, .json, .txt, .bak)");
                     }
                     
                     inicializarApp(); 
@@ -1792,7 +1838,7 @@
                     event.target.value = null; 
 
                 } catch (error) {
-                    alert(error.message); 
+                    mostrarToast(error.message, 'error'); 
                     console.error("Error de importación:", error); 
                     event.target.value = null;
                 }
@@ -1800,17 +1846,24 @@
             reader.readAsText(file, 'UTF-8'); 
         }
 
-        function limpiarTodosLosDatos() {
-            if (confirm(TRADUCTIONS[config.idioma].confirmDeleteAll)) {
-                localStorage.removeItem('gastos_v2');
-                localStorage.removeItem('ingresos_v2'); 
-                localStorage.removeItem('config_v2');
-                localStorage.removeItem('ultimoRecordatorioBackup');
-                window.location.reload(); 
-            }
+        function confirmarLimpiarTodosLosDatos() { 
+            mostrarModalConfirmacion(
+                TRADUCTIONS[config.idioma].btnDeleteAll,
+                TRADUCTIONS[config.idioma].confirmDeleteAll,
+                () => {
+                    limpiarTodosLosDatos(); 
+                }
+            );
         }
 
-        // PWA Service Worker (sin cambios)
+        function limpiarTodosLosDatos() { 
+            localStorage.removeItem('gastos_v2');
+            localStorage.removeItem('ingresos_v2'); 
+            localStorage.removeItem('config_v2');
+            localStorage.removeItem('ultimoRecordatorioBackup');
+            window.location.reload(); 
+        }
+
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', () => {
             navigator.serviceWorker.register('sw.js').then(reg => console.log('SW registrado!')).catch(err => console.error('Error SW:', err));
