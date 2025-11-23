@@ -2,1873 +2,1023 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="appTitle">Control de Gastos (v4.0)</title> 
-    
-    <meta name="theme-color" content="#007bff">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title id="appTitle">Control Gastos v3.3</title> 
+    <meta name="theme-color" content="#1E3A8A">
     <link rel="manifest" href="manifest.json">
-    
     <link rel="apple-touch-icon" href="icon-192.png">
-
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     
     <style>
-        /* ESTILOS CSS */
+        /* --- VARIABLES --- */
         :root {
-            --primary-color: #007bff;
-            --primary-dark: #0056b3;
-            --secondary-color: #6c757d; /* Gris para categoría */
-            --success-color: #28a745;
-            --danger-color: #dc3545;
-            --warning-color: #ffc107;
-            --bg-light: #f8f9fa;
-            --text-dark: #343a40; 
-            --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-            /* Colores Tablas */
-            --table-total-bg: #d1e7dd; 
-            --table-total-border: #0f5132;
-            --table-zebra-bg: #f8f9fa; 
-            /* Colores Pago */
-            --color-cash: #28a745;
-            --color-card: #007bff;
-            --color-transfer: #fd7e14;
+            --primary-gradient: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
+            --primary-color: #2563EB; --primary-dark: #1E3A8A;
+            --success-color: #10B981; --danger-color: #EF4444;
+            --secondary-color: #64748B; --bg-body: #F1F5F9; --bg-card: #FFFFFF;
+            --text-main: #1E293B; --text-light: #FFFFFF; --border-color: #E2E8F0;
+            --table-header-bg: #F8FAFC; --table-header-text: #475569; --table-zebra-bg: #F8FAFC;
+            --color-cash: #10B981; --color-card: #2563EB; --color-transfer: #F59E0B;
+            --nav-bg: #FFFFFF; --nav-active: #2563EB;
+            --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-body: #0F172A; --bg-card: #1E293B; --text-main: #F8FAFC;
+                --border-color: #334155; --nav-bg: #1E293B; --nav-active: #60A5FA;
+                --table-header-bg: #1E293B; --table-header-text: #CBD5E1; --table-zebra-bg: #0F172A;
+            }
         }
 
         body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-light);
-            color: var(--text-dark);
-            max-width: 450px; 
-            margin: 0 auto;
-            position: relative;
-            min-height: 100vh;
-            padding-bottom: 70px;
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif; margin: 0; padding: 0;
+            background-color: var(--bg-body); color: var(--text-main);
+            max-width: 450px; margin: 0 auto; min-height: 100vh;
+            padding-bottom: calc(65px + var(--safe-area-bottom)); 
+            overscroll-behavior-y: none; -webkit-user-select: none; user-select: none;
         }
 
-        h2, h3 {
-            color: var(--primary-dark);
-            text-align: center;
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        .shake-error { animation: shake 0.4s ease-in-out; border-color: var(--danger-color) !important; }
+
+        /* UI GLOBAL */
+        h2, h3 { color: var(--text-main); text-align: center; }
+        h2 { font-size: 1.3em; margin-top: 20px; color: var(--primary-color); font-weight: 700; }
         
         .header {
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            padding: 5px 15px;
-            background-color: white;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); 
+            display: flex; align-items: center; padding: 10px 15px;
+            background: var(--primary-gradient); color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 50;
         }
-        #appLogo {
-            display: flex;
-            align-items: center;
-            font-size: 1em;
-            font-weight: bold;
-            color: var(--primary-color);
+        #appLogo { font-size: 1em; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+        
+        .pantalla { display: none; padding: 15px; }
+        .pantalla.activa { display: block; animation: fadeIn 0.3s ease-out forwards; }
+
+        /* CALCULADORA (VISTA GASTO) */
+        .calc-display {
+            background: var(--bg-card); padding: 15px; border-radius: 16px;
+            text-align: center; margin-bottom: 15px; box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            min-height: 80px; display: flex; flex-direction: column; justify-content: center;
         }
-        #appLogo i {
-            font-size: 1.2em;
-            margin-right: 5px;
+        .calc-amount { font-size: 2.5em; font-weight: bold; color: var(--primary-color); margin: 5px 0; line-height: 1; }
+        .calc-category-label { font-size: 0.9em; color: var(--secondary-color); text-transform: uppercase; letter-spacing: 1px; min-height: 1.2em; font-weight: bold; }
+        
+        .calc-meta-row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
+        .calc-meta-row input {
+            border: 1px solid var(--border-color); background: var(--bg-card);
+            padding: 12px; border-radius: 8px; color: var(--text-main); font-size: 0.95em;
+        }
+        #calcDesc { flex-grow: 1; }
+        
+        .date-btn {
+            background: var(--bg-card); border: 1px solid var(--border-color); padding: 12px; 
+            border-radius: 8px; cursor:pointer; display: flex; align-items: center; gap: 5px;
         }
         
-        .pantalla {
-            display: none;
-            padding: 20px 20px 100px 20px; 
-        }
-        .pantalla.activa {
-            display: block;
+        .btn-mini-save {
+            background: var(--success-color); color: white; border: none; border-radius: 8px;
+            width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 1.2em; box-shadow: var(--shadow-sm);
         }
 
-        .form-group {
-            margin-bottom: 8px;
+        .cat-grid-container {
+            display: grid; grid-template-rows: repeat(2, 1fr); grid-auto-flow: column;             
+            grid-auto-columns: minmax(90px, auto); gap: 6px; overflow-x: auto;
+            padding-bottom: 5px; margin-bottom: 10px; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+            transition: all 0.4s ease; max-height: 100px; border: 1px solid transparent; border-radius: 12px;
         }
-        label {
-            display: block;
-            margin-bottom: 3px;
-            font-weight: bold;
-            font-size: 0.9em;
+        .cat-grid-container.expanded { grid-template-rows: repeat(4, 1fr); max-height: 200px; padding: 10px; background: var(--bg-body); }
+        .cat-grid-container::-webkit-scrollbar { display: none; }
+        
+        .cat-pill {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            padding: 8px 5px; border-radius: 8px; font-size: 0.8em;
+            cursor: pointer; color: var(--text-main); transition: all 0.3s;
+            text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            display: flex; align-items: center; justify-content: center;
         }
+        .cat-pill.selected {
+            background: var(--primary-color); color: white; border-color: var(--primary-color); font-weight: bold;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3); transform: scale(1.02);
+        }
+
+        .pay-pills { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
+        .pay-pill {
+            padding: 8px 15px; border-radius: 8px; font-size: 0.9em; cursor: pointer;
+            border: 1px solid var(--border-color); background: var(--bg-card); color: var(--secondary-color);
+        }
+        .pay-pill.selected { background: #EFF6FF; border-color: var(--primary-color); color: var(--primary-color); font-weight: bold; }
+
+        .numpad-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .num-btn {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 10px 0; font-size: 1.3em; font-weight: 600;
+            color: var(--text-main); cursor: pointer; box-shadow: 0 2px 0 rgba(0,0,0,0.05); transition: background 0.1s;
+        }
+        .num-btn:active { transform: translateY(2px); background: #F1F5F9; }
+        .num-btn.save-btn {
+            grid-column: span 1; grid-row: span 2; background: var(--success-color); color: white; border: none;
+            display: flex; align-items: center; justify-content: center; font-size: 1.5em;
+        }
+        .num-btn.del-btn { color: var(--danger-color); }
+        
+        .mini-history { margin-top: 20px; padding-top: 10px; border-top: 1px solid var(--border-color); }
+        .mini-history h3 { font-size: 0.95em; color: var(--secondary-color); margin-bottom: 8px; text-align: left; }
+
+        /* --- ESTILOS CLÁSICOS (VISTAS MENSUAL/ANUAL) --- */
+        .form-group { margin-bottom: 10px; }
+        label { display: block; margin-bottom: 3px; font-weight: 600; font-size: 0.9em; color: var(--secondary-color); }
         input[type="date"], input[type="text"], input[type="number"], select {
-            width: 100%;
-            padding: 8px; 
-            border: 1px solid #ced4da;
-            border-radius: 5px;
-            box-sizing: border-box;
-            font-size: 1em;
+            width: 100%; padding: 10px; border: 1px solid var(--border-color);
+            border-radius: 8px; box-sizing: border-box; font-size: 1em;
+            background-color: var(--bg-card); color: var(--text-main); transition: border-color 0.2s;
         }
-        
-        .input-buscar {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-            border: 1px solid #ced4da;
-            border-radius: 5px;
-            box-sizing: border-box;
-            font-size: 0.95em;
-        }
-        
-        /* BOTONES */
+        input:focus, select:focus { outline: none; border-color: var(--primary-color); }
+
         button.btn {
-            display: block;
-            width: 100%;
-            padding: 10px; 
-            border: none;
-            border-radius: 5px;
-            font-size: 1em; 
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-top: 8px; 
+            width: 100%; padding: 12px; border: none; border-radius: 8px;
+            font-size: 1em; cursor: pointer; margin-top: 8px; font-weight: 600; transition: opacity 0.2s;
         }
-        .btn-primary { background-color: var(--primary-color); color: white; }
-        .btn-danger { background-color: var(--danger-color); color: white; margin-top: 20px; }
-        .btn-success { background-color: var(--success-color); color: white; margin-top: 8px; }
-        .btn-secondary { background-color: var(--secondary-color); color: white; margin-top: 8px; }
+        button.btn:active { opacity: 0.8; }
+        .btn-primary { background: var(--primary-gradient); color: white; }
+        .btn-danger { background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); color: white; margin-top: 20px; }
+        .btn-success { background-color: var(--success-color); color: white; }
+        .btn-secondary { background-color: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); }
         
-        button.btn-accion-tabla {
-            padding: 5px 10px;
-            font-size: 0.8em;
-            margin: 0 4px; 
-            width: auto;
-            display: inline-block; 
+        button.btn-accion-tabla { 
+            width: auto; padding: 5px 10px; font-size: 0.9em; margin: 0 2px; border-radius: 6px;
+            background-color: transparent !important; border: 1px solid; 
         }
-        .btn-accion-tabla i {
-            margin-right: 4px;
-        }
+        .btn-accion-editar { color: var(--primary-color); border-color: var(--primary-color); }
+        .btn-accion-borrar { color: var(--danger-color); border-color: var(--danger-color); }
 
-        /* TABLAS */
         .tabla-gastos {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px; 
-            background-color: white;
-            box-shadow: var(--shadow-sm);
-            border-radius: 5px;
-            overflow: hidden;
+            width: 100%; border-collapse: collapse; margin-top: 15px; 
+            background-color: var(--bg-card); box-shadow: var(--shadow-sm); border-radius: 8px; overflow: hidden;
         }
-        .tabla-gastos th, .tabla-gastos td {
-            padding: 10px;
-            text-align: left;
-            font-size: 0.9em;
-        }
-        
-        /* Encabezado color verde claro */
+        .tabla-gastos th, .tabla-gastos td { padding: 12px 10px; text-align: left; font-size: 0.9em; }
         .tabla-gastos th {
-            background-color: var(--table-total-bg); 
-            font-weight: 600;
-            border-bottom: 2px solid var(--table-total-border); 
-            color: var(--table-total-border); 
+            background-color: var(--table-header-bg); font-weight: 600;
+            border-bottom: 2px solid var(--border-color); color: var(--table-header-text); 
         }
-        
-        .tabla-gastos td {
-             border-bottom: 1px solid #dee2e6;
-        }
-        .tabla-gastos tbody tr:nth-child(even) {
-            background-color: var(--table-zebra-bg);
-        }
-        .tabla-gastos tr:hover:not(tfoot tr) {
-            background-color: #e0f7fa;
-            cursor: pointer;
-        }
-        .tabla-gastos .gasto-valor {
-            text-align: right;
-            color: var(--text-dark);
-            white-space: nowrap; 
-        }
-        
-        .tabla-gastos .gasto-categoria-abbr {
-            font-weight: 500;
-            font-size: 0.9em; 
-            text-align: center;
-            text-transform: none; 
-            color: var(--text-dark); 
-        }
-        
-        /* Estilo categoría debajo descripción */
-        .tabla-gastos .gasto-categoria-subtexto {
-            font-size: 0.78em; 
-            color: var(--secondary-color); /* Gris oscuro */
-            margin-top: 2px;
-        }
-        
-        .tabla-gastos .gasto-percent {
-            text-align: right;
-        }
-        
-        .tabla-gastos tfoot tr {
-            font-weight: bold;
-            background-color: var(--table-total-bg);
-            border-top: 2px solid var(--table-total-border);
-        }
-        .tabla-gastos tfoot td {
-            border-bottom: none;
-            color: var(--table-total-border);
-            white-space: nowrap; 
-        }
-        .tabla-gastos tfoot .gasto-valor {
-            color: var(--table-total-border);
-            text-align: right; 
-        }
-        td.td-acciones {
-            text-align: center;
-            white-space: nowrap; 
-        }
+        .tabla-gastos td { border-bottom: 1px solid var(--border-color); font-size: 0.95em; } 
+        .tabla-gastos .gasto-categoria-subtexto { font-size: 0.75em; color: var(--secondary-color); margin-top: 2px; }
+        .tabla-gastos tbody tr:nth-child(even) { background-color: var(--table-zebra-bg); }
+        .tabla-gastos .gasto-valor { text-align: right; white-space: nowrap; font-weight: 600; }
+        .tabla-gastos tfoot tr { font-weight: bold; background-color: var(--table-header-bg); border-top: 2px solid var(--border-color); }
+        .tabla-gastos tfoot td { color: var(--primary-dark); border-bottom: none; }
+        .tabla-gastos tfoot .gasto-valor { color: var(--primary-dark); }
 
-        /* TIPO DE PAGO ESTILOS */
-        .payment-type-group {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 5px; 
-            gap: 5px;
-        }
-        .payment-type-group.segunda-fila {
-             margin-bottom: 15px;
-        }
+        .col-porcentaje { text-align: right !important; }
+
+        .payment-filters-grid { display: flex; flex-wrap: wrap; }
+        .payment-filters-grid label[for*="Total"] { flex-basis: 100%; margin-bottom: 5px; }
+        .payment-filters-grid label:not([for*="Total"]) { flex-grow: 1; flex-basis: 0; }
         
-        .payment-type-group input[type="radio"] {
-            display: none;
-        }
+        .payment-type-group { display: flex; justify-content: space-around; margin-bottom: 5px; gap: 5px; }
+        .payment-type-group input { display: none; }
         .payment-type-group label {
-            flex-grow: 1;
-            text-align: center;
-            padding: 10px 5px;
-            border: 1px solid #ced4da;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-weight: normal;
-            font-size: 0.9em;
+            flex-grow: 1; text-align: center; padding: 10px 5px;
+            border: 1px solid var(--border-color); border-radius: 8px;
+            cursor: pointer; font-size: 0.9em; background-color: var(--bg-card);
+            display: flex; align-items: center; justify-content: center; gap: 5px; transition: all 0.2s;
         }
-        .payment-type-group label i {
-            margin-right: 5px;
-            font-size: 1.1em;
+        .payment-type-group label i { font-size: 1.1em; }
+        .payment-type-group input:checked + label {
+            background-color: #EFF6FF; border-color: var(--primary-color); font-weight: bold; color: var(--primary-color);
         }
-        label[for*="Contado"] i, label[for*="Cash"] i { color: var(--color-cash); }
-        label[for*="Tarjeta"] i, label[for*="Card"] i { color: var(--color-card); }
-        label[for*="Transferencia"] i, label[for*="Transf"] i, label[for*="Transfer"] i { color: var(--color-transfer); }
-        label[for*="Total"] i { color: var(--secondary-color); }
-        
-        .payment-type-group input[type="radio"]:checked + label {
-            background-color: #e9ecef;
-            border-color: var(--primary-color);
-            font-weight: bold;
-            box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
-        }
-        
-        #filtro-pago-mensual-container label, 
-        #filtro-pago-historico-container label {
-            padding-top: 8px;
-            padding-bottom: 8px;
-            font-size: 0.85em; 
-        }
-        .payment-type-group label .pago-sum {
-            display: block;
-            font-weight: bold;
-            font-size: 1em; 
-            margin-top: 4px;
-            color: var(--text-dark);
-        }
-        .payment-type-group input[type="radio"]:checked + label .pago-sum {
-            color: var(--primary-dark);
-        }
-        
-        /* NAVEGACIÓN */
+        label[for*="Contado"] i { color: var(--color-cash); }
+        label[for*="Tarjeta"] i { color: var(--color-card); }
+        label[for*="Transf"] i { color: var(--color-transfer); }
+        .pago-sum { display: block; font-weight: bold; font-size: 1em; margin-left: 5px; }
+
         .nav-tabs {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: space-around;
-            background-color: white;
-            border-top: 1px solid #e0e0e0;
-            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
-            max-width: 450px;
-            margin: 0 auto;
-            z-index: 10;
+            position: fixed; bottom: 0; left: 0; right: 0;
+            display: flex; justify-content: space-around;
+            background-color: var(--nav-bg); border-top: 1px solid var(--border-color);
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
+            max-width: 450px; margin: 0 auto; z-index: 100;
+            height: 55px; padding-bottom: var(--safe-area-bottom);
         }
         .nav-tabs button {
-            flex-grow: 1;
-            padding: 10px 0; 
-            border: none;
-            background-color: transparent;
-            color: var(--text-dark);
-            font-size: 0.8em; 
-            cursor: pointer;
-            transition: color 0.2s;
-            line-height: 1.2; 
+            flex-grow: 1; border: none; background: transparent;
+            color: var(--secondary-color); font-size: 0.7em; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-        .nav-tabs button i {
-            display: block;
-            font-size: 1.5em; 
-            margin-bottom: 3px;
-            color: var(--text-dark); 
-            transition: color 0.2s;
-        }
-        .nav-tabs button.active i { color: var(--primary-color); }
-        .nav-tabs button.active { color: var(--primary-color); font-weight: bold; }
-        
-        /* DETALLES Y GRAFICOS */
-        #detalleMensual, #detalleHistorico {
-            margin-top: 20px;
-            background-color: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: var(--shadow-sm);
-            display: none;
-        }
-        #detalleMensual h3, #detalleHistorico h3 {
-            margin-top: 0;
-            font-size: 1.1em;
-            border-bottom: 1px solid #e9ecef;
-            padding-bottom: 10px;
-        }
-        .chart-container {
-            position: relative;
-            height: 300px;
-            margin-bottom: 30px;
-            background-color: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: var(--shadow-sm);
-        }
-        
-        .filtro-container-inline {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 8px;
-        }
-        .filtro-container-inline select {
-            flex-grow: 1;
-        }
+        .nav-tabs button i { font-size: 1.4em; margin-bottom: 2px; }
+        .nav-tabs button.active { color: var(--nav-active); font-weight: bold; }
 
-        .table-info-alert {
-            background-color: #e9ecef;
-            color: var(--secondary-color);
-            padding: 8px;
-            border-radius: 5px;
-            font-size: 0.85em;
-            text-align: center;
-            margin-top: 15px;
-            margin-bottom: -10px;
+        #detalleMensual, #detalleHistorico, .chart-container {
+            background-color: var(--bg-card); padding: 15px; border-radius: 8px;
+            box-shadow: var(--shadow-sm); margin-top: 20px; border: 1px solid var(--border-color);
         }
+        .chart-container { height: 350px; position: relative; }
+        .filtro-container-inline { display: flex; gap: 10px; margin-bottom: 8px; }
         
-        /* --- MODAL STYLES --- */
-        .modal {
-            display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); padding-top: 60px;
+        .pagination-controls {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-color);
+            font-size: 0.85em; white-space: nowrap;
         }
+        .pagination-controls button { width: auto; margin: 0; padding: 4px 10px; font-size: 0.9em; }
+        .pagination-controls span { font-weight: bold; color: var(--secondary-color); }
+
+        .modal { display: none; position: fixed; z-index: 200; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); padding-top: 60px; }
         .modal-content {
-            background-color: #fefefe; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 400px; border-radius: 10px; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19); animation-name: animatetop; animation-duration: 0.4s
+            background-color: var(--bg-card); margin: 5% auto; padding: 20px;
+            border: 1px solid var(--secondary-color); width: 90%; max-width: 400px; border-radius: 10px;
         }
-        @keyframes animatetop { from {top: -300px; opacity: 0} to {top: 0; opacity: 1} }
-        .close-btn { color: #aaa; float: right; font-size: 28px; font-weight: bold; }
-        .close-btn:hover, .close-btn:focus { color: #000; text-decoration: none; cursor: pointer; }
-        #modal-botones-edicion, #modal-botones-categoria, #modal-botones-confirmar { display: flex; gap: 10px; margin-top: 15px; }
-        #modal-botones-edicion button, #modal-botones-categoria button, #modal-botones-confirmar button { flex-grow: 1; margin-top: 0; }
-        #btnModalGuardar, #btnModalGuardarCategoria, #btnConfirmarAceptar { background-color: var(--success-color); }
-        #btnModalEliminar { background-color: var(--danger-color); }
-        #btnModalCancelar, #btnModalCancelarCategoria, #btnConfirmarCancelar { background-color: var(--secondary-color); }
+        .close-btn { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .modal-botones-row { display: flex; gap: 10px; margin-top: 15px; }
 
-        /* --- TOAST --- */
         #toast {
-            display: none;
-            position: fixed;
-            bottom: 80px; 
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 12px 20px;
-            border-radius: 25px;
-            background-color: #333;
-            color: white;
-            font-size: 0.9em;
-            z-index: 200;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            opacity: 0;
-            transition: opacity 0.3s, bottom 0.3s;
+            display: none; position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+            padding: 12px 20px; border-radius: 25px; background-color: #1E293B; color: white; z-index: 300;
         }
-        #toast.show {
-            display: block;
-            opacity: 1;
-            bottom: 90px;
-        }
+        #toast.show { display: block; }
         #toast.success { background-color: var(--success-color); }
         #toast.error { background-color: var(--danger-color); }
-        #toast.warning { background-color: var(--warning-color); color: #333; }
-        #toast.info { background-color: var(--primary-color); }
-
     </style>
 </head>
 <body>
     <div class="header">
-        <span id="appLogo"><i class="fas fa-hand-holding-usd"></i> <span id="logoTitle">Control de Gastos</span></span>
+        <span id="appLogo"><i class="fas fa-wallet"></i> <span data-i18n="appTitle">Control v3.3</span></span>
     </div>
 
+    <!-- VISTA GASTO (CALCULADORA PANCHI) -->
     <div id="gasto" class="pantalla activa">
-        <div id="formulario-gasto">
-            <h2 id="titleIngresoGasto">Ingreso de Gasto</h2>
-            <div class="form-group">
-                <label id="labelGastoFecha" for="gastoFecha">Fecha:</label>
-                <input type="date" id="gastoFecha" required>
+        <div class="calculator-container">
+            <div class="calc-display" id="displayContainer">
+                <div class="calc-category-label" id="displayCatLabel"></div> 
+                <div class="calc-amount" id="displayAmount">$ 0</div>
             </div>
-            <div class="form-group">
-                <label id="labelGastoCategoria" for="gastoCategoria">Categoría:</label>
-                <select id="gastoCategoria" required></select>
-            </div>
-            <div class="form-group">
-                <label id="labelGastoDescripcion" for="gastoDescripcion">Descripción:</label>
-                <input type="text" id="gastoDescripcion" list="sugerenciasDescripciones" placeholder="Ej: Café, Supermercado" required>
+            <div class="calc-meta-row">
+                <div class="date-btn" onclick="abrirSelectorFecha()">
+                    <i class="fas fa-calendar-alt" style="color: var(--primary-color);"></i> <span id="dateBtnLabel" style="font-weight: 600;">Hoy</span>
+                </div>
+                <input type="date" id="calcDate" onchange="actualizarLabelFecha()" style="position:absolute; visibility:hidden;">
+                
+                <input type="text" id="calcDesc" placeholder="Descripción" list="sugerenciasDescripciones" onkeyup="detectarCategoriaInteligente()">
                 <datalist id="sugerenciasDescripciones"></datalist>
+                
+                <!-- Botón Guardar Mini -->
+                <button class="btn-mini-save" onclick="guardarGastoCalc()"><i class="fas fa-check"></i></button>
             </div>
-            <div class="form-group">
-                <label id="labelGastoValor" for="gastoValor">Valor:</label>
-                <input type="text" id="gastoValor" placeholder="0,00" inputmode="decimal" required>
+            
+            <div class="pay-pills">
+                <div class="pay-pill selected" onclick="setPayment('Contado')" id="pillContado">Contado</div>
+                <div class="pay-pill" onclick="setPayment('Tarjeta')" id="pillTarjeta">Tarjeta</div>
+                <div class="pay-pill" onclick="setPayment('Transferencia')" id="pillTransf">Transf.</div>
             </div>
-            <label id="labelTipoPago">Tipo de Pago:</label>
-            <div class="payment-type-group">
-                <input type="radio" id="pagoContado" name="tipoPago" value="Contado" checked>
-                <label for="pagoContado"><i class="fas fa-money-bill-wave"></i> <span data-lang-key="cash">Contado</span></label>
-                <input type="radio" id="pagoTarjeta" name="tipoPago" value="Tarjeta">
-                <label for="pagoTarjeta"><i class="fas fa-credit-card"></i> <span data-lang-key="card">Tarjeta</span></label>
-                <input type="radio" id="pagoTransferencia" name="tipoPago" value="Transferencia">
-                <label for="pagoTransferencia"><i class="fas fa-exchange-alt"></i> <span data-lang-key="transfer">Transf.</span></label>
-            </div>
-            <div id="botonesRegistroGasto">
-                <button class="btn btn-primary" id="btnAddGasto" onclick="agregarGasto()">➕ Añadir Gasto</button>
+            <div class="cat-grid-container" id="catScroller"></div>
+            <div class="numpad-grid">
+                <button class="num-btn" onclick="appendNum('1')">1</button>
+                <button class="num-btn" onclick="appendNum('2')">2</button>
+                <button class="num-btn" onclick="appendNum('3')">3</button>
+                <button class="num-btn save-btn" onclick="guardarGastoCalc()"><i class="fas fa-check"></i></button>
+                <button class="num-btn" onclick="appendNum('4')">4</button>
+                <button class="num-btn" onclick="appendNum('5')">5</button>
+                <button class="num-btn" onclick="appendNum('6')">6</button>
+                <button class="num-btn" onclick="appendNum('7')">7</button>
+                <button class="num-btn" onclick="appendNum('8')">8</button>
+                <button class="num-btn" onclick="appendNum('9')">9</button>
+                <button class="num-btn" onclick="appendNum('.')">.</button>
+                <button class="num-btn" onclick="appendNum('0')">0</button>
+                <button class="num-btn del-btn" onclick="delNum()"><i class="fas fa-backspace"></i></button>
             </div>
         </div>
-        <h2 id="titleUltimosGastos" style="text-align: center; margin-top: 30px; font-size: 1.2em;">Gastos del Mes</h2>
-        <div class="table-info-alert" data-lang-key="alertClickEdit">Clic en la fila para editar o eliminar.</div>
-        
-        <table id="tablaUltimosGastos" class="tabla-gastos">
-            <thead>
-                <tr>
-                    <th data-lang-key="date" style="width: 20%;">Fecha</th>
-                    <th data-lang-key="desc">Descripción</th>
-                    <th data-lang-key="value" style="width: 30%; text-align: right;">Valor</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-            <tfoot>
-                <tr><td colspan="2" data-lang-key="totalSum">TOTAL</td><td id="totalUltimosGastos" class="gasto-valor"></td></tr>
-            </tfoot>
-        </table>
+        <div class="mini-history">
+            <h3 data-i18n="titleGastosMes">Recientes del Mes</h3>
+            <table id="tablaUltimosGastos" class="tabla-gastos">
+                <thead><tr><th>Fecha</th><th>Descripción</th><th style="text-align: right;">Valor</th></tr></thead>
+                <tbody></tbody>
+                <tfoot><tr><td colspan="2">TOTAL</td><td id="totalUltimosGastos" class="gasto-valor"></td></tr></tfoot>
+            </table>
+            <div class="pagination-controls">
+                <button class="btn btn-secondary" onclick="cambiarPaginaPrincipal(-1)">Ant</button>
+                <span id="pageInfoPrincipal">Pág 1</span>
+                <button class="btn btn-secondary" onclick="cambiarPaginaPrincipal(1)">Sig</button>
+            </div>
+        </div>
     </div>
     
+    <!-- VISTA MENSUAL -->
     <div id="mensual" class="pantalla">
-        <h2 id="titleResumenMensual">Resumen Mensual</h2>
-        
+        <h2 data-i18n="titleResumenMensual">Resumen Mensual</h2>
         <div class="filtro-container-inline">
             <select id="filtroMes" onchange="actualizarResumenMensual()"></select>
             <select id="filtroAnioMensual" onchange="actualizarResumenMensual()"></select>
         </div>
         
-        <label id="labelFiltroTipoPagoMensual" data-lang-key="paymentTypeTotal">Tipo de Pago (Gastos):</label> 
-        
-        <div class="payment-type-group" id="filtro-pago-mensual-container-nivel1">
+        <!-- Filtros con IDs corregidos para totales -->
+        <div class="payment-type-group payment-filters-grid">
             <input type="radio" id="filtroPagoTotalMensual" name="filtroTipoPagoMensual" value="TODOS" checked>
-            <label for="filtroPagoTotalMensual"><i class="fas fa-receipt"></i> <span data-lang-key="totalGeneral">Total</span> <span class="pago-sum" id="sum-total-mensual">$0.00</span></label>
-        </div>
-        <div class="payment-type-group segunda-fila" id="filtro-pago-mensual-container-nivel2">
+            <label for="filtroPagoTotalMensual"><span data-i18n="lblTotal">Total</span><span class="pago-sum" id="sum-total-mensual">$0</span></label>
             <input type="radio" id="filtroPagoContadoMensual" name="filtroTipoPagoMensual" value="Contado">
-            <label for="filtroPagoContadoMensual"><i class="fas fa-money-bill-wave"></i> <span data-lang-key="cash">Contado</span> <span class="pago-sum" id="sum-contado-mensual">$0.00</span></label>
+            <label for="filtroPagoContadoMensual"><i class="fas fa-coins"></i><span class="pago-sum" id="sum-contado-mensual">$0</span></label>
             <input type="radio" id="filtroPagoTarjetaMensual" name="filtroTipoPagoMensual" value="Tarjeta">
-            <label for="filtroPagoTarjetaMensual"><i class="fas fa-credit-card"></i> <span data-lang-key="card">Tarjeta</span> <span class="pago-sum" id="sum-tarjeta-mensual">$0.00</span></label>
+            <label for="filtroPagoTarjetaMensual"><i class="far fa-credit-card"></i><span class="pago-sum" id="sum-tarjeta-mensual">$0</span></label>
             <input type="radio" id="filtroPagoTransfMensual" name="filtroTipoPagoMensual" value="Transferencia">
-            <label for="filtroPagoTransfMensual"><i class="fas fa-exchange-alt"></i> <span data-lang-key="transfer">Transf.</span> <span class="pago-sum" id="sum-transf-mensual">$0.00</span></label>
+            <label for="filtroPagoTransfMensual"><i class="fas fa-mobile-alt"></i><span class="pago-sum" id="sum-transf-mensual">$0</span></label>
         </div>
-        
-        <h3 id="titleTotalCategoriaMensual" style="font-size: 1.1em; margin-top: 0;">Total Gastos por Categoría</h3>
-        <div class="table-info-alert" data-lang-key="alertClickDetail">Clic en la fila para ver el detalle.</div>
+
+        <h3 data-i18n="titleTotalCategoria">Total por Categoría</h3>
         <table id="tablaResumenMensual" class="tabla-gastos">
-            <thead>
-                <tr><th data-lang-key="category">Categoría</th><th data-lang-key="total">Total</th><th data-lang-key="percent">%</th></tr>
-            </thead>
+            <thead><tr><th data-i18n="colCategoria">Categoría</th><th style="text-align: right;" data-i18n="colTotal">Total</th><th class="col-porcentaje">%</th></tr></thead>
             <tbody></tbody>
-            <tfoot>
-                 <tr>
-                    <td data-lang-key="totalSum">TOTAL</td>
-                    <td></td> 
-                    <td id="totalResumenMensual" class="gasto-valor"></td>
-                 </tr>
-            </tfoot>
+            <tfoot><tr><td data-i18n="lblTotal">TOTAL</td><td></td><td id="totalResumenMensual" class="gasto-valor"></td></tr></tfoot>
         </table>
         
-        <div id="detalleMensual">
-            <h3><span data-lang-key="detail">Detalle Gasto</span>: <span id="detalleCategoriaMensual"></span></h3>
-            <input type="text" id="buscarDetalleMensual" class="input-buscar" placeholder="Buscar en detalle..." onkeyup="filtrarTablaDetalle('buscarDetalleMensual', 'tablaDetalleMensual')">
-            <div class="table-info-alert" data-lang-key="alertClickEdit">Clic en la fila para editar o eliminar.</div>
+        <div id="detalleMensual" style="display:none;">
+            <h3>Detalle: <span id="detalleCategoriaMensual" style="color: var(--primary-color);"></span></h3>
+            <input type="text" id="buscarDetalleMensual" class="input-buscar" data-i18n-ph="phBuscar" placeholder="Buscar..." onkeyup="filtrarTablaDetalle('buscarDetalleMensual', 'tablaDetalleMensual')" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid var(--border-color); border-radius:8px;">
             <table id="tablaDetalleMensual" class="tabla-gastos">
-                <thead><tr><th data-lang-key="date">Fecha</th><th data-lang-key="desc">Descripción</th><th data-lang-key="value">Valor</th></tr></thead>
+                <thead><tr><th data-i18n="colFecha">Fecha</th><th data-i18n="colDesc">Descripción</th><th data-i18n="colValor">Valor</th></tr></thead>
                 <tbody></tbody>
-                <tfoot><tr><td colspan="2" data-lang-key="totalSum">TOTAL</td><td id="totalDetalleMensual" class="gasto-valor"></td></tr></tfoot>
+                <tfoot><tr><td colspan="2" data-i18n="lblTotalGeneral">TOTAL GENERAL</td><td id="totalDetalleMensual" class="gasto-valor"></td></tr></tfoot>
             </table>
+            <div class="pagination-controls">
+                <button class="btn btn-secondary" onclick="cambiarPagina(-1)">Ant</button>
+                <span id="pageInfoMensual">Pág 1</span>
+                <button class="btn btn-secondary" onclick="cambiarPagina(1)">Sig</button>
+            </div>
         </div>
         
-        <h3 id="titleChartMensual" style="font-size: 1.1em; margin-top: 30px;">Distribución de Gastos</h3>
-        <div class="chart-container" id="chartMensualContainer">
-            <canvas id="chartMensualCanvas"></canvas>
-        </div>
-        
-        <button class="btn btn-secondary" id="btnExportMes" onclick="exportarReporteCSV('mensual')">⬇️ Compartir CSV del Mes</button> 
+        <div class="chart-container" id="chartMensualContainer"><canvas id="chartMensualCanvas"></canvas></div>
+        <button class="btn btn-secondary" id="btnExportMes" onclick="generarYCompartirCSV('mensual')" data-i18n="btnCsvMes">Exportar Mes</button> 
     </div>
 
+    <!-- VISTA HISTORICO -->
     <div id="historico" class="pantalla">
-        <h2 id="titleResumenHistorico">Resumen Histórico</h2>
+        <h2 data-i18n="titleResumenAnual">Resumen Anual</h2>
         <div class="filtro-container-inline">
             <select id="filtroAnioHistorico" onchange="actualizarResumenHistorico(true)"></select>
         </div>
-
-        <label id="labelFiltroTipoPagoHistorico" data-lang-key="paymentTypeTotal">Tipo de Pago (Gastos):</label>
         
-        <div class="payment-type-group" id="filtro-pago-historico-container-nivel1">
+        <div class="payment-type-group payment-filters-grid">
             <input type="radio" id="filtroPagoTotalHistorico" name="filtroTipoPagoHistorico" value="TODOS" checked>
-            <label for="filtroPagoTotalHistorico"><i class="fas fa-receipt"></i> <span data-lang-key="totalGeneral">Total</span> <span class="pago-sum" id="sum-total-historico">$0.00</span></label>
-        </div>
-        <div class="payment-type-group segunda-fila" id="filtro-pago-historico-container-nivel2">
+            <label for="filtroPagoTotalHistorico"><span data-i18n="lblTotal">Total</span><span class="pago-sum" id="sum-total-historico">$0</span></label>
             <input type="radio" id="filtroPagoContadoHistorico" name="filtroTipoPagoHistorico" value="Contado">
-            <label for="filtroPagoContadoHistorico"><i class="fas fa-money-bill-wave"></i> <span data-lang-key="cash">Contado</span> <span class="pago-sum" id="sum-contado-historico">$0.00</span></label>
+            <label for="filtroPagoContadoHistorico"><i class="fas fa-coins"></i><span class="pago-sum" id="sum-contado-historico">$0</span></label>
             <input type="radio" id="filtroPagoTarjetaHistorico" name="filtroTipoPagoHistorico" value="Tarjeta">
-            <label for="filtroPagoTarjetaHistorico"><i class="fas fa-credit-card"></i> <span data-lang-key="card">Tarjeta</span> <span class="pago-sum" id="sum-tarjeta-historico">$0.00</span></label>
+            <label for="filtroPagoTarjetaHistorico"><i class="far fa-credit-card"></i><span class="pago-sum" id="sum-tarjeta-historico">$0</span></label>
             <input type="radio" id="filtroPagoTransfHistorico" name="filtroTipoPagoHistorico" value="Transferencia">
-            <label for="filtroPagoTransfHistorico"><i class="fas fa-exchange-alt"></i> <span data-lang-key="transfer">Transf.</span> <span class="pago-sum" id="sum-transf-historico">$0.00</span></label>
+            <label for="filtroPagoTransfHistorico"><i class="fas fa-mobile-alt"></i><span class="pago-sum" id="sum-transf-historico">$0</span></label>
         </div>
 
-        <h3 id="titleTotalCatHistorico" style="font-size: 1.1em; margin-top: 0;">Total Gastos por Categoría (Año)</h3>
-        <div class="table-info-alert" data-lang-key="alertClickDetail">Clic en la fila para ver el detalle.</div>
+        <h3 data-i18n="titleTotalCatAnio">Total Categorías (Año)</h3>
         <table id="tablaResumenHistorico" class="tabla-gastos">
-            <thead>
-                <tr><th data-lang-key="category">Categoría</th><th data-lang-key="total">Total</th><th data-lang-key="percent">%</th></tr>
-            </thead>
+            <thead><tr><th data-i18n="colCategoria">Categoría</th><th style="text-align: right;" data-i18n="colTotal">Total</th><th class="col-porcentaje">%</th></tr></thead>
             <tbody></tbody>
-            <tfoot>
-                 <tr>
-                    <td data-lang-key="totalSum">TOTAL</td>
-                    <td></td>
-                    <td id="totalResumenHistorico" class="gasto-valor"></td>
-                 </tr>
-            </tfoot>
+            <tfoot><tr><td data-i18n="lblTotal">TOTAL</td><td></td><td id="totalResumenHistorico" class="gasto-valor"></td></tr></tfoot>
         </table>
         
-        <div id="detalleHistorico">
-            <h3><span data-lang-key="detail">Detalle Gasto</span>: <span id="detalleCategoriaHistorico"></span></h3>
-            <input type="text" id="buscarDetalleHistorico" class="input-buscar" placeholder="Buscar en detalle..." onkeyup="filtrarTablaDetalle('buscarDetalleHistorico', 'tablaDetalleHistorico')">
-            <div class="table-info-alert" data-lang-key="alertClickEdit">Clic en la fila para editar o eliminar.</div>
+        <div id="detalleHistorico" style="display:none;">
+            <h3>Detalle: <span id="detalleCategoriaHistorico" style="color: var(--primary-color);"></span></h3>
+            <input type="text" id="buscarDetalleHistorico" class="input-buscar" data-i18n-ph="phBuscar" placeholder="Buscar..." onkeyup="filtrarTablaDetalle('buscarDetalleHistorico', 'tablaDetalleHistorico')" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid var(--border-color); border-radius:8px;">
             <table id="tablaDetalleHistorico" class="tabla-gastos">
-                <thead><tr><th data-lang-key="date">Fecha</th><th data-lang-key="desc">Descripción</th><th data-lang-key="value">Valor</th></tr></thead>
+                <thead><tr><th data-i18n="colFecha">Fecha</th><th data-i18n="colDesc">Descripción</th><th data-i18n="colValor">Valor</th></tr></thead>
                 <tbody></tbody>
-                <tfoot><tr><td colspan="2" data-lang-key="totalSum">TOTAL</td><td id="totalDetalleHistorico" class="gasto-valor"></td></tr></tfoot>
+                <tfoot><tr><td colspan="2" data-i18n="lblTotalGeneral">TOTAL GENERAL</td><td id="totalDetalleHistorico" class="gasto-valor"></td></tr></tfoot>
             </table>
+            <div class="pagination-controls">
+                <button class="btn btn-secondary" onclick="cambiarPagina(-1)">Ant</button>
+                <span id="pageInfoHistorico">Pág 1</span>
+                <button class="btn btn-secondary" onclick="cambiarPagina(1)">Sig</button>
+            </div>
         </div>
         
-        <h3 id="titleChartHistorico" style="font-size: 1.1em; margin-top: 30px;">Distribución de Gastos del Año</h3>
-        <div class="chart-container" id="chartHistoricoContainer">
-            <canvas id="chartHistoricoCanvas"></canvas>
-        </div>
-        
-        <h3 id="titleChartMensualHistorico" style="font-size: 1.1em; margin-top: 30px;">Gastos por Mes</h3>
-        <div class="chart-container" id="chartHistoricoMesesContainer">
-            <canvas id="chartHistoricoMesesCanvas"></canvas>
-        </div>
-
-        <button class="btn btn-secondary" id="btnExportYear" onclick="exportarReporteCSV('historico')">⬇️ Compartir CSV del Año</button> 
+        <div class="chart-container" id="chartHistoricoContainer"><canvas id="chartHistoricoCanvas"></canvas></div>
+        <div class="chart-container" id="chartHistoricoMesesContainer"><canvas id="chartHistoricoMesesCanvas"></canvas></div>
+        <button class="btn btn-secondary" id="btnExportYear" onclick="generarYCompartirCSV('historico')" data-i18n="btnCsvAnio">Exportar Año</button> 
     </div>
 
     <div id="configuracion" class="pantalla">
-        <h2 id="titleConfig">Configuración</h2>
+        <h2 data-i18n="menuConfig">Configuración</h2>
         <div class="form-group">
-            <label id="labelConfigMoneda" for="configMoneda">Símbolo de Moneda:</label>
-            <select id="configMoneda" onchange="guardarConfig()">
-                <option value="$">$ (Dólar)</option>
-                <option value="€">€ (Euro)</option>
-                <option value="£">£ (Libra)</option>
-                <option value="¥">¥ (Yen/Yuan)</option>
-                <option value="S/">S/ (Sol)</option>
-                <option value="COL$">COL$ (Peso Colombiano)</option>
-                <option value="Bs.">Bs. (Bolívar/Boliviano)</option>
-                <option value="MXN$">MXN$ (Peso Mexicano)</option>
-                <option value="ARS$">ARS$ (Peso Argentino)</option>
+            <label data-i18n="lblMoneda">Moneda:</label>
+            <select id="configMoneda" onchange="cambiarConfig('moneda', this.value)">
+                <option value="$">$ USD</option><option value="€">€ EUR</option>
+                <option value="MXN$">MXN$</option><option value="S/">S/ PEN</option>
+                <option value="COL$">COL$</option><option value="Bs.">Bs.</option>
             </select>
         </div>
         <div class="form-group">
-            <label id="labelConfigIdioma" for="configIdioma">Idioma de la Aplicación:</label>
-            <select id="configIdioma" onchange="guardarConfig()">
-                <option value="es">Español</option>
-                <option value="en">English</option>
+            <label data-i18n="lblIdioma">Idioma:</label>
+            <select id="configIdioma" onchange="cambiarConfig('idioma', this.value)">
+                <option value="es">Español</option><option value="en">English</option>
             </select>
         </div>
-        <h3 id="titleGestionCategorias">Gestión de Categorías (Gastos)</h3>
+
+        <h3 data-i18n="titleCategorias">Categorías</h3>
         <table id="tablaCategorias" class="tabla-gastos">
-            <thead><tr><th data-lang-key="category">Categoría</th><th data-lang-key="action">Acción</th></tr></thead>
+            <thead><tr><th data-i18n="colNombre">Nombre</th><th data-i18n="colAccion" style="text-align:center">Acción</th></tr></thead>
             <tbody></tbody>
         </table>
-        <div class="form-group" style="margin-top: 20px;">
-            <input type="text" id="nuevaCategoria" placeholder="Nombre de nueva categoría">
-            <button class="btn btn-primary" id="btnAddCategory" onclick="agregarCategoria()">Añadir Categoría</button>
+        
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <input type="text" id="nuevaCategoria" data-i18n-ph="phNueva" placeholder="Nueva Categoría">
+            <button class="btn btn-primary" id="btnAddCategory" onclick="agregarCategoria()" style="margin-top:0; width:30%;">Añadir</button>
         </div>
-        <h3 id="titleUtilidadesDatos" style="margin-top: 40px;">Utilidades de Datos</h3>
-        
-        <button class="btn btn-success" id="btnBackupShare" onclick="compartirBackupJSON()">⬆️ Crear Backup (Compartir)</button>
-        <input type="file" id="inputImportar" accept=".csv,.json,.txt,.bak" style="display: none;">
-        <button class="btn btn-primary" id="btnImport" onclick="document.getElementById('inputImportar').click()">⬇️ Importar Datos (CSV/JSON)</button>
-        
-        <button class="btn btn-danger" id="btnDeleteAll" onclick="confirmarLimpiarTodosLosDatos()">⚠️ Eliminar TODOS los Datos</button>
-    </div>
 
-    <div class="nav-tabs">
-        <button onclick="mostrarPantalla('gasto', this)" class="active"><i class="fas fa-plus-circle"></i> <span data-lang-key="navExpense">Gasto</span></button>
-        <button onclick="mostrarPantalla('mensual', this)"><i class="fas fa-chart-pie"></i> <span data-lang-key="navMonthly">Mensual</span></button>
-        <button onclick="mostrarPantalla('historico', this)"><i class="fas fa-list-alt"></i> <span data-lang-key="navHistory">Histórico</span></button>
-        <button onclick="mostrarPantalla('configuracion', this)"><i class="fas fa-cogs"></i> <span data-lang-key="navConfig">Config</span></button>
+        <h3 style="margin-top: 30px;" data-i18n="titleDatos">Datos</h3>
+        <button class="btn btn-success" onclick="compartirBackupJSON()" data-i18n="btnBackup">⬆️ Backup (Guardar y Compartir)</button>
+        <input type="file" id="inputImportar" style="display: none;">
+        <button class="btn btn-primary" id="btnImportarTrigger" onclick="document.getElementById('inputImportar').click()" data-i18n="btnImportar">⬇️ Importar</button>
+        <button class="btn btn-danger" onclick="confirmarLimpiarTodosLosDatos()" data-i18n="btnBorrarTodo">⚠️ Borrar Todo</button>
     </div>
 
     <div id="modalEdicion" class="modal">
         <div class="modal-content">
-            <span class="close-btn" onclick="cerrarModal()">&times;</span>
-            <h2 id="modalTitle" style="color: var(--primary-dark); margin-top: 0;">Editar Gasto</h2>
-            <div class="form-group"><label for="modalFecha">Fecha:</label><input type="date" id="modalFecha" required></div>
-            <div class="form-group"><label for="modalCategoria">Categoría:</label><select id="modalCategoria" required></select></div>
-            <div class="form-group"><label for="modalDescripcion">Descripción:</label><input type="text" id="modalDescripcion" list="sugerenciasDescripcionesModal" placeholder="Ej: Café, Supermercado" required><datalist id="sugerenciasDescripcionesModal"></datalist></div>
-            <div class="form-group"><label for="modalValor">Valor:</label>
-                <input type="text" id="modalValor" placeholder="0,00" inputmode="decimal" required>
+            <h2 data-i18n="titleEditar">Editar</h2>
+            <div class="form-group"><input type="date" id="modalFecha"></div>
+            <div class="form-group"><select id="modalCategoria"></select></div>
+            <div class="form-group"><input type="text" id="modalDescripcion"></div>
+            <div class="form-group"><input type="text" id="modalValor"></div>
+            <div class="payment-type-group-classic">
+                <input type="radio" name="modalTipoPago" value="Contado" id="mpC"><label for="mpC">Efectivo</label>
+                <input type="radio" name="modalTipoPago" value="Tarjeta" id="mpT"><label for="mpT">Tarjeta</label>
+                <input type="radio" name="modalTipoPago" value="Transferencia" id="mpTr"><label for="mpTr">Transf.</label>
             </div>
-            <label>Tipo de Pago:</label>
-            <div class="payment-type-group">
-                <input type="radio" id="modalPagoContado" name="modalTipoPago" value="Contado" checked><label for="modalPagoContado"><i class="fas fa-money-bill-wave"></i> Contado</label>
-                <input type="radio" id="modalPagoTarjeta" name="modalTipoPago" value="Tarjeta"><label for="modalPagoTarjeta"><i class="fas fa-credit-card"></i> Tarjeta</label>
-                <input type="radio" id="modalPagoTransferencia" name="modalTipoPago" value="Transferencia"><label for="modalPagoTransferencia"><i class="fas fa-exchange-alt"></i> Transf.</label>
-            </div>
-            <div id="modal-botones-edicion">
-                <button class="btn" id="btnModalGuardar" onclick="guardarEdicionDesdeModal()">Guardar</button>
-                <button class="btn" id="btnModalEliminar" onclick="confirmarEliminarGasto()">Eliminar</button>
-                <button class="btn" id="btnModalCancelar" onclick="cerrarModal()">Cancelar</button>
+            <div class="modal-botones-row">
+                <button class="btn btn-success" onclick="guardarEdicionDesdeModal()" data-i18n="btnGuardar">Guardar</button>
+                <button class="btn btn-danger" onclick="confirmarEliminarGasto()" data-i18n="btnBorrar">Borrar</button>
+                <button class="btn btn-secondary" onclick="cerrarModal()" data-i18n="btnCancelar">Cancelar</button>
             </div>
         </div>
     </div>
     
     <div id="modalEdicionCategoria" class="modal">
         <div class="modal-content">
-            <span class="close-btn" onclick="cerrarModalCategoria()">&times;</span>
-            <h2 id="modalTitleCategoria" style="color: var(--primary-dark); margin-top: 0;">Renombrar Categoría</h2>
-            <div class="form-group">
-                <label for="modalCategoriaNombre">Nuevo nombre:</label>
-                <input type="text" id="modalCategoriaNombre" required>
-            </div>
-            <div id="modal-botones-categoria">
-                <button class="btn" id="btnModalGuardarCategoria" onclick="guardarEdicionCategoria()">Guardar</button>
-                <button class="btn" id="btnModalCancelarCategoria" onclick="cerrarModalCategoria()">Cancelar</button>
+            <h2 data-i18n="titleRenombrar">Renombrar</h2>
+            <div class="form-group"><input type="text" id="modalCategoriaNombre"></div>
+            <div class="modal-botones-row">
+                <button class="btn btn-success" onclick="guardarEdicionCategoria()" data-i18n="btnGuardar">Guardar</button>
+                <button class="btn btn-secondary" onclick="cerrarModalCategoria()" data-i18n="btnCancelar">Cancelar</button>
             </div>
         </div>
     </div>
     
-    <div id="toast"></div>
-
     <div id="modalConfirmacion" class="modal">
         <div class="modal-content">
-            <h2 id="modalConfirmTitle" style="color: var(--primary-dark); margin-top: 0;">Confirmar</h2>
-            <p id="modalConfirmBody">¿Está seguro?</p>
-            <div id="modal-botones-confirmar">
-                <button class="btn" id="btnConfirmarAceptar" onclick="ejecutarConfirmacion()">Aceptar</button>
-                <button class="btn" id="btnConfirmarCancelar" onclick="cerrarModalConfirmacion()">Cancelar</button>
+            <h2 data-i18n="titleConfirmar">Confirmar</h2>
+            <p id="modalConfirmBody" style="text-align: center; margin-bottom: 20px;"></p>
+            <div class="modal-botones-row">
+                <button class="btn btn-danger" onclick="ejecutarConfirmacion()" data-i18n="btnSi">Sí</button>
+                <button class="btn btn-secondary" onclick="cerrarModalConfirmacion()" data-i18n="btnNo">No</button>
             </div>
         </div>
     </div>
 
-<script>
-        // =================================================================================
-        // ESTRUCTURA DE DATOS, IDIOMAS Y VARIABLES GLOBALES
-        // =================================================================================
-        
-        const MONTH_NAMES_FULL = {
-            es: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
-            en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-        };
-        const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    <div id="toast">Notificación</div>
+
+    <div class="nav-tabs">
+        <button onclick="mostrarPantalla('gasto', this)" class="active"><i class="fas fa-plus-circle"></i><span data-i18n="menuGasto">Gasto</span></button>
+        <button onclick="mostrarPantalla('mensual', this)"><i class="fas fa-chart-pie"></i><span data-i18n="menuMes">Mes</span></button>
+        <button onclick="mostrarPantalla('historico', this)"><i class="fas fa-calendar-alt"></i><span data-i18n="menuAnio">Año</span></button>
+        <button onclick="mostrarPantalla('configuracion', this)"><i class="fas fa-cog"></i><span data-i18n="menuConfig">Config</span></button>
+    </div>
 
-        // Diccionario de traducciones
-        const TRADUCTIONS = {
-            es: {
-                appTitle: "Control de Gastos (v4.0)",
-                logoTitle: "Control de Gastos",
-                navExpense: "Gasto", navMonthly: "Mensual", navHistory: "Histórico", navConfig: "Config",
-                titleIngresoGasto: "Ingreso de Gasto", 
-                titleUltimosGastos: "Gastos del Mes", 
-                labelGastoFecha: "Fecha:", labelGastoCategoria: "Categoría:", labelGastoDescripcion: "Descripción:", labelGastoValor: "Valor:", labelTipoPago: "Tipo de Pago:",
-                cash: "Contado", card: "Tarjeta", transfer: "Transf.", 
-                paymentTypeTotal: "Tipo de Pago (Gastos):", 
-                totalGeneral: "Total General",
-                btnAddGasto: "➕ Añadir Gasto", saveEdit: "Guardar", delete: "Eliminar", cancel: "Cancelar",
-                date: "Fecha", cat: "Cat.", desc: "Descripción", value: "Valor", category: "Categoría", total: "Total", action: "Acción", month: "Mes", percent: "%", totalSum: "TOTAL",
-                titleResumenMensual: "Resumen Mensual", titleTotalCategoriaMensual: "Total Gastos por Categoría", titleChartMensual: "Distribución de Gastos",
-                btnExportMes: "⬇️ Compartir CSV del Mes",
-                titleResumenHistorico: "Resumen Histórico", titleTotalCatHistorico: "Total Gastos por Categoría (Año)", 
-                titleChartHistorico: "Distribución de Gastos del Año",
-                titleChartMensualHistorico: "Gastos por Mes",
-                btnExportYear: "⬇️ Compartir CSV del Año",
-                titleConfig: "Configuración", 
-                labelConfigMoneda: "Símbolo de Moneda:",
-                labelConfigIdioma: "Idioma de la Aplicación:",
-                titleGestionCategorias: "Gestión de Categorías", btnAddCategory: "Añadir Categoría", titleUtilidadesDatos: "Utilidades de Datos",
-                btnExportAll: "⬆️ Crear Backup (Compartir)", btnImport: "⬇️ Importar Datos",
-                btnDeleteAll: "⚠️ Eliminar TODOS los Datos",
-                detail: "Detalle Gasto",
-                alertMissing: "Por favor, rellena todos los campos.",
-                alertFoundError: "Error al encontrar el gasto para editar.",
-                alertValueInvalid: "Por favor, ingrese un valor válido.", 
-                confirmDelete: "¿Está seguro de que desea eliminar este gasto?",
-                confirmDeleteAll: "ADVERTENCIA: ¿Está seguro de que desea eliminar TODOS sus gastos y configuraciones? Esta acción es irreversible.",
-                alertNoExport: "No hay datos para exportar en este filtro.", 
-                alertCSVEmpty: "El archivo CSV está vacío o no tiene datos.",
-                alertCSVError: "Error al procesar el archivo CSV.",
-                alertImportSuccess: (count) => `Éxito! Se han importado ${count} registros de gastos (CSV).`,
-                alertImportSuccessJSON: "¡Éxito! Se ha restaurado el backup.",
-                alertImportErrorJSON: "Error al restaurar el backup. El archivo no es válido.",
-                alertClickEdit: "Clic en la fila para editar o eliminar.",
-                alertClickDetail: "Clic en la fila para ver el detalle.",
-                modalTitle: "Editar Gasto",
-                modalSave: "Guardar", modalDelete: "Eliminar", modalCancel: "Cancelar",
-                alertBackup: "¡Recordatorio! 🗓️ Es un buen día para hacer una copia de seguridad.",
-                modalTitleCategoria: "Renombrar Categoría",
-                alertCatNombreVacio: "El nombre de la categoría no puede estar vacío.",
-                alertCatNombreExiste: (nombre) => `La categoría "${nombre}" ya existe.`,
-                alertCatNoSePuedeBorrar: (nombre) => `No se puede borrar "${nombre}", tiene gastos asociados.`,
-                alertGuardado: "¡Guardado!",
-                toastGastoEliminado: "Gasto eliminado.",
-                toastCategoriaGuardada: "Categoría guardada.",
-                toastCategoriaEliminada: "Categoría eliminada.",
-                modalConfirmTitle: "Confirmar Acción",
-                modalConfirmDeleteCat: (nombre) => `¿Está seguro de que desea eliminar la categoría "${nombre}"?`,
-                btnAceptar: "Aceptar",
-            },
-            en: { 
-                appTitle: "Expense Tracker (v4.0)",
-                logoTitle: "Expense Tracker",
-                navExpense: "Expense", navMonthly: "Monthly", navHistory: "History", navConfig: "Config",
-                titleIngresoGasto: "Expense Entry", 
-                titleUltimosGastos: "Month's Expenses", 
-                labelGastoFecha: "Date:", labelGastoCategoria: "Category:", labelGastoDescripcion: "Description:", labelGastoValor: "Amount:", labelTipoPago: "Payment Type:",
-                cash: "Cash", card: "Card", transfer: "Transfer", 
-                paymentTypeTotal: "Payment Type (Expenses):",
-                totalGeneral: "General Total",
-                btnAddGasto: "➕ Add Expense", saveEdit: "Save", delete: "Delete", cancel: "Cancel",
-                date: "Date", cat: "Cat.", desc: "Desc.", value: "Amount", category: "Category", total: "Total", action: "Action", month: "Month", percent: "%", totalSum: "TOTAL",
-                titleResumenMensual: "Monthly Summary", titleTotalCategoriaMensual: "Total Expenses by Category", titleChartMensual: "Expense Distribution",
-                btnExportMes: "⬇️ Share Month CSV",
-                titleResumenHistorico: "Historical Summary", titleTotalCatHistorico: "Total Expenses by Category (Year)", 
-                titleChartHistorico: "Yearly Expense Distribution",
-                titleChartMensualHistorico: "Expenses by Month",
-                btnExportYear: "⬇️ Share Year CSV",
-                titleConfig: "Configuration", 
-                labelConfigMoneda: "Currency Symbol:",
-                labelConfigIdioma: "Application Language:",
-                titleGestionCategorias: "Category Management", btnAddCategory: "Add Category", titleUtilidadesDatos: "Data Utilities",
-                btnExportAll: "⬆️ Create Backup (Share)", btnImport: "⬇️ Import Data",
-                btnDeleteAll: "⚠️ Delete ALL Data",
-                detail: "Expense Detail",
-                alertMissing: "Please fill in all fields correctly.", alertFoundError: "Error finding record for editing.",
-                alertValueInvalid: "Please enter a valid amount.", confirmDelete: "Are you sure you want to delete this record?",
-                confirmDeleteAll: "WARNING: Are you sure you want to delete ALL your expenses and settings? This action is irreversible.",
-                alertNoExport: "No data to export in this filter.", alertCSVEmpty: "The CSV file is empty or has no data.",
-                alertCSVError: "Error processing CSV file. Ensure the format is correct.",
-                alertImportSuccess: (count) => `Success! Imported ${count} expense records (CSV).`,
-                alertImportSuccessJSON: "Success! The backup has been restored.",
-                alertImportErrorJSON: "Error restoring backup. The file is invalid.",
-                alertClickEdit: "Click on the row to edit or delete.",
-                alertClickDetail: "Click on the row to see the detail.",
-                modalTitle: "Edit Expense",
-                modalSave: "Save", modalDelete: "Delete", modalCancel: "Cancel",
-                alertBackup: "Reminder! 🗓️ It's a good day to back up your data.",
-                modalTitleCategoria: "Rename Category",
-                alertCatNombreVacio: "Category name cannot be empty.",
-                alertCatNombreExiste: (nombre) => `The category "${nombre}" already exists.`,
-                alertCatNoSePuedeBorrar: (nombre) => `Cannot delete "${nombre}", it has associated expenses.`,
-                alertGuardado: "Saved!",
-                toastGastoEliminado: "Expense deleted.",
-                toastCategoriaGuardada: "Category saved.",
-                toastCategoriaEliminada: "Category deleted.",
-                modalConfirmTitle: "Confirm Action",
-                modalConfirmDeleteCat: (nombre) => `Are you sure you want to delete the category "${nombre}"?`,
-                btnAceptar: "Accept",
-            }
-        };
-
-        let gastos;
-        let config;
-        let descripcionesUsadas;
-
-        let gastoEditandoId = null;
-        let categoriaEditandoNombreAntiguo = null; 
-        
-        let filtroPagoMensual = 'TODOS'; 
-        let filtroPagoHistorico = 'TODOS';
-        let filtroCategoriaHistorico = 'TODOS'; 
-        
-        let chartMensualInstance = null;
-        let chartHistoricoInstance = null;
-        let chartHistoricoMesesInstance = null;
-
-        let confirmCallback = null;
-        let toastTimeout = null;
-
-        function setLanguage(lang) {
-            const t = TRADUCTIONS[lang];
-            if (!t) return;
-            document.documentElement.lang = lang; 
-            document.getElementById('appTitle').textContent = t.appTitle;
-            document.getElementById('logoTitle').textContent = t.logoTitle;
-            
-            document.getElementById('titleIngresoGasto').textContent = t.titleIngresoGasto;
-            document.getElementById('titleUltimosGastos').textContent = t.titleUltimosGastos;
-            document.getElementById('labelGastoFecha').textContent = t.labelGastoFecha;
-            document.getElementById('labelGastoCategoria').textContent = t.labelGastoCategoria;
-            document.getElementById('labelGastoDescripcion').textContent = t.labelGastoDescripcion;
-            document.getElementById('labelGastoValor').textContent = t.labelGastoValor;
-            document.getElementById('labelTipoPago').textContent = t.labelTipoPago;
-            document.getElementById('btnAddGasto').textContent = t.btnAddGasto;
-            
-            document.getElementById('titleResumenMensual').textContent = t.titleResumenMensual;
-            document.getElementById('titleTotalCategoriaMensual').textContent = t.titleTotalCategoriaMensual;
-            document.getElementById('titleChartMensual').textContent = t.titleChartMensual;
-            document.getElementById('btnExportMes').textContent = t.btnExportMes;
-            document.getElementById('titleResumenHistorico').textContent = t.titleResumenHistorico;
-            document.getElementById('titleTotalCatHistorico').textContent = t.titleTotalCatHistorico;
-            document.getElementById('titleChartHistorico').textContent = t.titleChartHistorico;
-            document.getElementById('titleChartMensualHistorico').textContent = t.titleChartMensualHistorico;
-            document.getElementById('btnExportYear').textContent = t.btnExportYear;
-            
-            document.getElementById('titleConfig').textContent = t.titleConfig;
-            document.getElementById('labelConfigMoneda').textContent = t.labelConfigMoneda;
-            document.getElementById('labelConfigIdioma').textContent = t.labelConfigIdioma;
-            document.getElementById('titleGestionCategorias').textContent = t.titleGestionCategorias;
-            document.getElementById('btnAddCategory').textContent = t.btnAddCategory;
-            document.getElementById('titleUtilidadesDatos').textContent = t.titleUtilidadesDatos;
-            document.getElementById('btnBackupShare').textContent = t.btnExportAll;
-            document.getElementById('btnImport').textContent = t.btnImport;
-            document.getElementById('btnDeleteAll').textContent = t.btnDeleteAll;
-            
-            document.getElementById('labelFiltroTipoPagoMensual').textContent = t.paymentTypeTotal;
-            document.getElementById('labelFiltroTipoPagoHistorico').textContent = t.paymentTypeTotal;
-            
-            document.getElementById('modalTitle').textContent = t.modalTitle;
-            document.getElementById('btnModalGuardar').textContent = t.modalSave;
-            document.getElementById('btnModalEliminar').textContent = t.modalDelete;
-            document.getElementById('btnModalCancelar').textContent = t.modalCancel;
-            document.getElementById('modalTitleCategoria').textContent = t.modalTitleCategoria;
-            document.getElementById('btnModalGuardarCategoria').textContent = t.modalSave;
-            document.getElementById('btnModalCancelarCategoria').textContent = t.modalCancel;
-            
-            document.getElementById('btnConfirmarAceptar').textContent = t.btnAceptar;
-            document.getElementById('btnConfirmarCancelar').textContent = t.modalCancel;
-            
-            document.querySelectorAll('[data-lang-key]').forEach(el => {
-                const key = el.getAttribute('data-lang-key');
-                if (t[key] && typeof t[key] === 'string') {
-                    const targetSpan = el.querySelector('span:not(.pago-sum)') || el;
-                    if (targetSpan) targetSpan.textContent = t[key];
-                }
-            });
-
-            updateTableHeadersAndFooters();
-        }
-
-        function updateTableHeadersAndFooters() {
-             const t = TRADUCTIONS[config.idioma];
-             document.getElementById('tablaUltimosGastos').querySelector('thead').innerHTML = `<tr><th style="width: 20%;">${t.date}</th><th>${t.desc}</th><th style="width: 30%; text-align: right;">${t.value}</th></tr>`;
-             document.getElementById('tablaUltimosGastos').querySelector('tfoot tr').innerHTML = `<td colspan="2" data-lang-key="totalSum">${t.totalSum}</td><td id="totalUltimosGastos" class="gasto-valor"></td>`;
-             
-             document.getElementById('tablaResumenMensual').querySelector('thead').innerHTML = `<tr><th style="width: 50%;">${t.category}</th><th style="width: 35%; text-align: right;">${t.total}</th><th style="width: 15%;" class="gasto-percent">${t.percent}</th></tr>`;
-             document.getElementById('tablaResumenMensual').querySelector('tfoot tr').innerHTML = `<td data-lang-key="totalSum">${t.totalSum}</td><td></td><td id="totalResumenMensual" class="gasto-valor"></td>`;
-             
-             document.getElementById('tablaResumenHistorico').querySelector('thead').innerHTML = `<tr><th style="width: 50%;">${t.category}</th><th style="width: 35%; text-align: right;">${t.total}</th><th style="width: 15%;" class="gasto-percent">${t.percent}</th></tr>`;
-             document.getElementById('tablaResumenHistorico').querySelector('tfoot tr').innerHTML = `<td data-lang-key="totalSum">${t.totalSum}</td><td></td><td id="totalResumenHistorico" class="gasto-valor"></td>`;
-             
-             document.getElementById('tablaDetalleMensual').querySelector('thead').innerHTML = `<tr><th>${t.date}</th><th>${t.desc}</th><th style="text-align: right;">${t.value}</th></tr>`;
-             document.getElementById('tablaDetalleMensual').querySelector('tfoot td:first-child').textContent = t.totalSum;
-             document.getElementById('tablaDetalleHistorico').querySelector('thead').innerHTML = `<tr><th>${t.date}</th><th>${t.desc}</th><th style="text-align: right;">${t.value}</th></tr>`;
-             document.getElementById('tablaDetalleHistorico').querySelector('tfoot td:first-child').textContent = t.totalSum;
-
-             document.getElementById('tablaCategorias').querySelector('thead').innerHTML = `<tr><th>${t.category}</th><th>${t.action}</th></tr>`;
-        }
-
-        function mostrarToast(mensaje, tipo = 'info', duracion = 3000) {
-            const toast = document.getElementById('toast');
-            if (toastTimeout) {
-                clearTimeout(toastTimeout);
-            }
-            
-            toast.textContent = mensaje;
-            toast.className = 'show ' + tipo; 
-
-            toastTimeout = setTimeout(() => {
-                toast.className = toast.className.replace('show', '');
-            }, duracion);
-        }
-
-        function mostrarModalConfirmacion(titulo, mensaje, callback) {
-            document.getElementById('modalConfirmTitle').textContent = titulo;
-            document.getElementById('modalConfirmBody').textContent = mensaje;
-            confirmCallback = callback; 
-            document.getElementById('modalConfirmacion').style.display = 'block';
-        }
-
-        function cerrarModalConfirmacion() {
-            document.getElementById('modalConfirmacion').style.display = 'none';
-            confirmCallback = null; 
-        }
-
-        function ejecutarConfirmacion() {
-            if (typeof confirmCallback === 'function') {
-                confirmCallback(); 
-            }
-            cerrarModalConfirmacion();
-        }
-
-        document.addEventListener('DOMContentLoaded', inicializarApp);
-
-        function inicializarApp() {
-            Chart.register(ChartDataLabels);
-            
-            cargarConfig();
-            cargarGastos();
-            
-            setLanguage(config.idioma); 
-            
-            document.getElementById('configMoneda').value = config.moneda;
-            document.getElementById('configIdioma').value = config.idioma;
-            
-            const hoy = new Date();
-            const diaDelMes = hoy.getDate();
-            const ultimoRecordatorio = localStorage.getItem('ultimoRecordatorioBackup');
-            const mesActualKey = hoy.getFullYear() + '-' + hoy.getMonth();
-            if ((diaDelMes === 1 || diaDelMes === 15) && ultimoRecordatorio !== mesActualKey) {
-                setTimeout(() => {
-                    mostrarToast(TRADUCTIONS[config.idioma].alertBackup, 'info', 5000);
-                    localStorage.setItem('ultimoRecordatorioBackup', mesActualKey);
-                }, 1500);
-            }
-            
-            actualizarSelectCategorias();
-            renderizarTablaCategorias();
-            
-            const anio = hoy.getFullYear();
-            const mes = String(hoy.getMonth() + 1).padStart(2, '0');
-            const dia = String(hoy.getDate()).padStart(2, '0');
-            const fechaLocal = `${anio}-${mes}-${dia}`;
-            document.getElementById('gastoFecha').value = fechaLocal;
-            
-            actualizarSugerenciasDescripciones(descripcionesUsadas);
-            
-            inicializarSelectoresMesAnio();
-            
-            renderizarGastosDelMes();
-            actualizarResumenMensual();
-            actualizarResumenHistorico();
-            
-            mostrarPantalla('gasto', document.querySelector('.nav-tabs button[onclick*="gasto"]'));
-
-            const modalEdicion = document.getElementById('modalEdicion');
-            const modalCategoria = document.getElementById('modalEdicionCategoria');
-            const modalConfirm = document.getElementById('modalConfirmacion'); 
-            window.onclick = function(event) {
-                if (event.target == modalEdicion) cerrarModal();
-                if (event.target == modalCategoria) cerrarModalCategoria();
-                if (event.target == modalConfirm) cerrarModalConfirmacion(); 
-            }
-            
-            document.getElementById('inputImportar').addEventListener('change', importarDatos); 
-            
-            document.querySelectorAll('input[name="filtroTipoPagoMensual"]').forEach(radio => {
-                radio.addEventListener('change', (e) => {
-                    filtroPagoMensual = e.target.value;
-                    actualizarResumenMensual();
-                });
-            });
-            
-            document.querySelectorAll('input[name="filtroTipoPagoHistorico"]').forEach(radio => {
-                radio.addEventListener('change', (e) => {
-                    filtroPagoHistorico = e.target.value;
-                    actualizarResumenHistorico(true); 
-                });
-            });
-        }
-
-        function mostrarPantalla(id, btn) {
-            document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
-            document.getElementById(id).classList.add('activa');
-            
-            document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            
-            if (id === 'gasto') renderizarGastosDelMes(); 
-            
-            const hoy = new Date();
-            const mesActual = hoy.getMonth() + 1;
-            const anioActual = hoy.getFullYear();
-            
-            if (id === 'mensual') {
-                document.getElementById('filtroMes').value = mesActual;
-                document.getElementById('filtroAnioMensual').value = anioActual;
-                filtroPagoMensual = 'TODOS';
-                if(document.getElementById('filtroPagoTotalMensual')) document.getElementById('filtroPagoTotalMensual').checked = true;
-                actualizarResumenMensual();
-            }
-            if (id === 'historico') {
-                document.getElementById('filtroAnioHistorico').value = anioActual;
-                filtroPagoHistorico = 'TODOS';
-                 if(document.getElementById('filtroPagoTotalHistorico')) document.getElementById('filtroPagoTotalHistorico').checked = true;
-                filtroCategoriaHistorico = 'TODOS'; 
-                actualizarResumenHistorico();
-            }
-            
-            if (id === 'configuracion') renderizarTablaCategorias();
-        }
-        
-        const sortData = (a, b) => {
-            const dateA = new Date(a.fecha).getTime();
-            const dateB = new Date(b.fecha).getTime();
-            if (dateA !== dateB) {
-                return dateB - dateA; 
-            }
-            return b.id - a.id; 
-        };
-
-        function cargarGastos() {
-            gastos = JSON.parse(localStorage.getItem('gastos_v2')) || [];
-            gastos.forEach(g => { if (!g.tipoPago) g.tipoPago = 'Contado'; });
-            gastos.sort(sortData); 
-            descripcionesUsadas = [...new Set(gastos.map(g => g.descripcion))];
-        }
-        function guardarGastos() {
-            localStorage.setItem('gastos_v2', JSON.stringify(gastos));
-            descripcionesUsadas = [...new Set(gastos.map(g => g.descripcion))];
-            actualizarSugerenciasDescripciones(descripcionesUsadas);
-        }
-
-        function cargarConfig() {
-            const defaultConfig = {
-                moneda: '$', 
-                idioma: 'es', 
-                categorias: ['Comida', 'Transporte', 'Ocio', 'Hogar', 'Salud', 'Otros']
-            };
-            let loadedConfig = JSON.parse(localStorage.getItem('config_v2'));
-            
-            if (loadedConfig && Array.isArray(loadedConfig.categorias)) {
-                config = { ...defaultConfig, ...loadedConfig }; 
-            } else if (loadedConfig) {
-                config = { ...loadedConfig, categorias: defaultConfig.categorias };
-            } else {
-                config = defaultConfig; 
-            }
-        }
-        function guardarConfig() {
-            config.moneda = document.getElementById('configMoneda').value;
-            config.idioma = document.getElementById('configIdioma').value;
-            localStorage.setItem('config_v2', JSON.stringify(config));
-            
-            setLanguage(config.idioma);
-            
-            renderizarGastosDelMes();
-            actualizarResumenMensual();
-            actualizarResumenHistorico();
-        }
-
-        function parsearValor(valorString) {
-            if (!valorString) return NaN;
-            return parseFloat(valorString.replace(',', '.'));
-        }
-        
-        function formatearMoneda(valor) {
-            if (typeof valor !== 'number' || isNaN(valor)) valor = 0;
-            const idiomaLocal = config.idioma === 'es' ? 'es-EC' : 'en-US';
-            
-            let valorFormateado = (valor).toLocaleString(idiomaLocal, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-            
-            return `${config.moneda} ${valorFormateado}`;
-        }
-
-        function agregarGasto() {
-            const fecha = document.getElementById('gastoFecha').value;
-            const categoria = document.getElementById('gastoCategoria').value;
-            const descripcion = document.getElementById('gastoDescripcion').value.trim();
-            const valor = parsearValor(document.getElementById('gastoValor').value);
-            const tipoPago = document.querySelector('input[name="tipoPago"]:checked').value;
-
-            if (!fecha || !categoria || !descripcion || isNaN(valor) || valor <= 0) {
-                mostrarToast(TRADUCTIONS[config.idioma].alertMissing, 'error'); 
-                return;
-            }
-            gastos.push({ id: Date.now(), fecha, categoria, descripcion, valor, tipoPago });
-            gastos.sort(sortData); 
-            guardarGastos();
-            
-            inicializarSelectoresMesAnio(); 
-
-            const btn = document.getElementById('btnAddGasto');
-            const originalTexto = btn.textContent;
-            btn.textContent = TRADUCTIONS[config.idioma].alertGuardado;
-            btn.classList.replace('btn-primary', 'btn-success');
-            btn.disabled = true; 
-            setTimeout(() => {
-                btn.textContent = originalTexto;
-                btn.classList.replace('btn-success', 'btn-primary');
-                btn.disabled = false;
-            }, 1500);
-
-            document.getElementById('gastoDescripcion').value = '';
-            document.getElementById('gastoValor').value = '';
-            document.getElementById('gastoCategoria').selectedIndex = 0;
-            document.getElementById('pagoContado').checked = true;
-            document.getElementById('gastoDescripcion').focus();
-            
-            const hoy = new Date();
-            const anio = hoy.getFullYear();
-            const mes = String(hoy.getMonth() + 1).padStart(2, '0');
-            const dia = String(hoy.getDate()).padStart(2, '0');
-            document.getElementById('gastoFecha').value = `${anio}-${mes}-${dia}`;
-
-            renderizarGastosDelMes();
-        }
-        
-        function formatearFecha(fechaStr) {
-            if (!fechaStr) return '??/??';
-            try {
-                const [year, month, day] = fechaStr.split('-');
-                const fecha = new Date(year, month - 1, day); 
-                if (isNaN(fecha.getTime())) return '??/??'; 
-                const dia = String(fecha.getDate()).padStart(2, '0');
-                const mes = String(fecha.getMonth() + 1).padStart(2, '0'); 
-                return `${dia}/${mes}`;
-            } catch (e) { return '??/??'; }
-        }
-        
-        function capitalizeFirstLetter(string) {
-            if (!string) return '';
-            return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
-        }
-
-        function renderizarGastosDelMes() {
-            const tbody = document.getElementById('tablaUltimosGastos').querySelector('tbody');
-            tbody.innerHTML = '';
-            const hoy = new Date();
-            const mesActual = hoy.getMonth() + 1;
-            const anioActual = hoy.getFullYear();
-            const gastosDelMes = gastos.filter(g => {
-                const fecha = new Date(g.fecha + 'T00:00:00');
-                return fecha.getMonth() + 1 === mesActual && fecha.getFullYear() === anioActual;
-            });
-            let total = 0;
-            gastosDelMes.forEach(g => {
-                total += g.valor;
-                const tr = document.createElement('tr');
-                tr.onclick = () => abrirModalEdicion(g.id);
-                tr.innerHTML = `
-                    <td>${formatearFecha(g.fecha)}</td>
-                    <td>
-                        ${g.descripcion}
-                        <div class="gasto-categoria-subtexto">${g.categoria}</div>
-                    </td>
-                    <td class="gasto-valor">${formatearMoneda(g.valor)}</td>`;
-                tbody.appendChild(tr);
-            });
-            document.getElementById('totalUltimosGastos').textContent = formatearMoneda(total);
-        }
-
-        function actualizarResumenMensual() {
-            document.getElementById('detalleMensual').style.display = 'none';
-            document.getElementById('chartMensualContainer').style.display = 'block';
-            
-            const mes = document.getElementById('filtroMes').value;
-            const anio = document.getElementById('filtroAnioMensual').value;
-            const tipoPagoGasto = filtroPagoMensual; 
-
-            const gastosDelPeriodo = gastos.filter(g => {
-                const fecha = new Date(g.fecha + 'T00:00:00'); 
-                return fecha.getFullYear() == anio && (fecha.getMonth() + 1) == mes;
-            });
-
-            let sumTotalGasto = 0, sumContado = 0, sumTarjeta = 0, sumTransf = 0;
-            gastosDelPeriodo.forEach(g => {
-                sumTotalGasto += g.valor;
-                if (g.tipoPago === 'Contado') sumContado += g.valor;
-                else if (g.tipoPago === 'Tarjeta') sumTarjeta += g.valor;
-                else if (g.tipoPago === 'Transferencia') sumTransf += g.valor;
-            });
-            document.getElementById('sum-total-mensual').textContent = formatearMoneda(sumTotalGasto);
-            document.getElementById('sum-contado-mensual').textContent = formatearMoneda(sumContado);
-            document.getElementById('sum-tarjeta-mensual').textContent = formatearMoneda(sumTarjeta);
-            document.getElementById('sum-transf-mensual').textContent = formatearMoneda(sumTransf);
-
-            let gastosFiltrados = [...gastosDelPeriodo]; 
-            if (tipoPagoGasto !== 'TODOS') {
-                gastosFiltrados = gastosFiltrados.filter(g => g.tipoPago === tipoPagoGasto);
-            }
-            
-            renderizarTablaResumen(gastosFiltrados, 'tablaResumenMensual', 'totalResumenMensual', (cat) => mostrarDetalleMensual(cat));
-            actualizarGraficoCategorias(gastosFiltrados, 'chartMensualCanvas', 'chartMensualInstance');
-        }
-
-        function mostrarDetalleMensual(categoria) {
-            document.getElementById('chartMensualContainer').style.display = 'none';
-            document.getElementById('buscarDetalleMensual').value = ''; 
-
-            const mes = document.getElementById('filtroMes').value;
-            const anio = document.getElementById('filtroAnioMensual').value;
-            const tipoPagoGasto = filtroPagoMensual; 
-
-            let gastosCategoria = gastos.filter(g => {
-                const fecha = new Date(g.fecha + 'T00:00:00'); 
-                return fecha.getFullYear() == anio && (fecha.getMonth() + 1) == mes && g.categoria === categoria;
-            });
-            if (tipoPagoGasto !== 'TODOS') {
-                 gastosCategoria = gastosCategoria.filter(g => g.tipoPago === tipoPagoGasto);
-            }
-            
-            renderizarTablaDetalle(gastosCategoria, 'tablaDetalleMensual', 'totalDetalleMensual');
-            document.getElementById('detalleCategoriaMensual').textContent = categoria;
-            document.getElementById('detalleMensual').style.display = 'block';
-            document.getElementById('detalleMensual').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function actualizarResumenHistorico(resetCategoria = false) {
-            if (resetCategoria) {
-                filtroCategoriaHistorico = 'TODOS';
-            }
-            
-            document.getElementById('detalleHistorico').style.display = 'none';
-            
-            if(filtroCategoriaHistorico === 'TODOS') {
-                document.getElementById('chartHistoricoContainer').style.display = 'block';
-            } else {
-                document.getElementById('chartHistoricoContainer').style.display = 'none';
-            }
-            document.getElementById('chartHistoricoMesesContainer').style.display = 'block'; 
-            
-            const anio = document.getElementById('filtroAnioHistorico').value;
-            const tipoPagoGasto = filtroPagoHistorico; 
-            
-            const gastosDelPeriodo = gastos.filter(g => new Date(g.fecha + 'T00:00:00').getFullYear() == anio);
-
-            let sumTotalGasto = 0, sumContado = 0, sumTarjeta = 0, sumTransf = 0;
-            gastosDelPeriodo.forEach(g => {
-                sumTotalGasto += g.valor;
-                if (g.tipoPago === 'Contado') sumContado += g.valor;
-                else if (g.tipoPago === 'Tarjeta') sumTarjeta += g.valor;
-                else if (g.tipoPago === 'Transferencia') sumTransf += g.valor;
-            });
-            document.getElementById('sum-total-historico').textContent = formatearMoneda(sumTotalGasto);
-            document.getElementById('sum-contado-historico').textContent = formatearMoneda(sumContado);
-            document.getElementById('sum-tarjeta-historico').textContent = formatearMoneda(sumTarjeta);
-            document.getElementById('sum-transf-historico').textContent = formatearMoneda(sumTransf);
-
-            let gastosFiltrados = [...gastosDelPeriodo];
-            if (tipoPagoGasto !== 'TODOS') {
-                gastosFiltrados = gastosFiltrados.filter(g => g.tipoPago === tipoPagoGasto);
-            }
-            
-            let gastosParaTabla = [...gastosFiltrados];
-            if (filtroCategoriaHistorico !== 'TODOS') {
-                gastosParaTabla = gastosFiltrados.filter(g => g.categoria === filtroCategoriaHistorico);
-            }
-            
-            renderizarTablaResumen(gastosParaTabla, 'tablaResumenHistorico', 'totalResumenHistorico', (cat) => mostrarDetalleHistorico(cat));
-            
-            let gastosParaDona = [...gastosFiltrados];
-            if (filtroCategoriaHistorico !== 'TODOS') {
-                gastosParaDona = gastosFiltrados.filter(g => g.categoria === filtroCategoriaHistorico);
-            }
-            actualizarGraficoCategorias(gastosParaDona, 'chartHistoricoCanvas', 'chartHistoricoInstance');
-            
-            let gastosParaGraficoMeses = [...gastosFiltrados];
-            if (filtroCategoriaHistorico !== 'TODOS') {
-                gastosParaGraficoMeses = gastosFiltrados.filter(g => g.categoria === filtroCategoriaHistorico);
-            }
-            actualizarGraficoGastosPorMes(gastosParaGraficoMeses);
-        }
-        
-        function mostrarDetalleHistorico(categoria) {
-            document.getElementById('chartHistoricoContainer').style.display = 'none';
-            document.getElementById('chartHistoricoMesesContainer').style.display = 'none'; 
-            document.getElementById('buscarDetalleHistorico').value = '';
-
-            const anio = document.getElementById('filtroAnioHistorico').value;
-            const tipoPagoGasto = filtroPagoHistorico;
-            
-            filtroCategoriaHistorico = categoria;
-            actualizarResumenHistorico(false); 
-            
-            document.getElementById('chartHistoricoContainer').style.display = 'none';
-
-            let gastosCategoria = gastos.filter(g => {
-                const fecha = new Date(g.fecha + 'T00:00:00'); 
-                return fecha.getFullYear() == anio && g.categoria === categoria;
-            });
-            if (tipoPagoGasto !== 'TODOS') {
-                 gastosCategoria = gastosCategoria.filter(g => g.tipoPago === tipoPagoGasto);
-            }
-            
-            renderizarTablaDetalle(gastosCategoria, 'tablaDetalleHistorico', 'totalDetalleHistorico');
-            document.getElementById('detalleCategoriaHistorico').textContent = categoria;
-            document.getElementById('detalleHistorico').style.display = 'block';
-            document.getElementById('detalleHistorico').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function filtrarTablaDetalle(inputId, tablaId) {
-            const filtro = document.getElementById(inputId).value.toLowerCase();
-            const tabla = document.getElementById(tablaId);
-            const filas = tabla.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
-            let totalFiltrado = 0;
-
-            for (let i = 0; i < filas.length; i++) {
-                const textoFila = filas[i].textContent || filas[i].innerText;
-                if (textoFila.toLowerCase().indexOf(filtro) > -1) {
-                    filas[i].style.display = "";
-                    const celdaValor = filas[i].cells[filas[i].cells.length - 1]; 
-                    const valor = parsearValor(celdaValor.textContent.replace(config.moneda, '')) || 0;
-                    totalFiltrado += valor;
-                } else {
-                    filas[i].style.display = "none";
-                }
-            }
-            
-            const tfoot = tabla.getElementsByTagName('tfoot')[0];
-            tfoot.querySelector('.gasto-valor').textContent = formatearMoneda(totalFiltrado);
-        }
-
-        function renderizarTablaResumen(gastosFiltrados, tablaId, totalId, onRowClick) {
-            const tbody = document.getElementById(tablaId).querySelector('tbody');
-            tbody.innerHTML = '';
-            const resumen = {};
-            let totalGeneral = 0;
-            gastosFiltrados.forEach(g => {
-                if (!resumen[g.categoria]) resumen[g.categoria] = 0;
-                resumen[g.categoria] += g.valor;
-                totalGeneral += g.valor;
-            });
-            const resumenArray = Object.entries(resumen).sort((a, b) => b[1] - a[1]);
-            resumenArray.forEach(([categoria, total]) => {
-                const tr = document.createElement('tr');
-                const porcentaje = totalGeneral > 0 ? ((total / totalGeneral) * 100).toFixed(1) : 0;
-                tr.innerHTML = `<td>${categoria}</td><td class="gasto-valor">${formatearMoneda(total)}</td><td class="gasto-percent">${porcentaje}%</td>`;
-                tr.style.cursor = 'pointer';
-                tr.onclick = () => onRowClick(categoria);
-                tbody.appendChild(tr);
-            });
-            document.getElementById(totalId).textContent = formatearMoneda(totalGeneral);
-        }
-        
-        function renderizarTablaDetalle(gastosDetalle, tablaId, totalId) {
-            const tbody = document.getElementById(tablaId).querySelector('tbody');
-            tbody.innerHTML = '';
-            let total = 0;
-            gastosDetalle.forEach(g => {
-                total += g.valor;
-                const tr = document.createElement('tr');
-                tr.onclick = () => abrirModalEdicion(g.id);
-                tr.innerHTML = `<td>${formatearFecha(g.fecha)}</td><td>${g.descripcion}</td><td class="gasto-valor">${formatearMoneda(g.valor)}</td>`;
-                tbody.appendChild(tr);
-            });
-            document.getElementById(totalId).textContent = formatearMoneda(total);
-        }
-
-        function actualizarGraficoCategorias(gastosFiltrados, canvasId, instanceVarName) {
-            const container = document.getElementById(canvasId.replace('Canvas', 'Container'));
-            if (container && container.style.display === 'none') {
-                 if (window[instanceVarName]) {
-                     window[instanceVarName].destroy();
-                     window[instanceVarName] = null;
-                 }
-                return;
-            }
-                
-            const ctx = document.getElementById(canvasId).getContext('2d');
-            const resumen = {};
-            let totalGeneral = 0;
-            gastosFiltrados.forEach(g => {
-                if (!resumen[g.categoria]) resumen[g.categoria] = 0;
-                resumen[g.categoria] += g.valor;
-                totalGeneral += g.valor;
-            });
-            const labels = Object.keys(resumen);
-            const data = Object.values(resumen);
-            const colors = ['#007bff','#28a745','#dc3545','#ffc107','#fd7e14','#17a2b8','#6f42c1','#e83e8c','#6c757d','#0056b3','#20c997','#8f5b32'];
-            const backgroundColors = labels.map((_, i) => colors[i % colors.length]);
-
-            if (window[instanceVarName]) window[instanceVarName].destroy();
-            
-            if (gastosFiltrados.length === 0) {
-                 window[instanceVarName] = null; 
-                 return; 
-            }
-
-            window[instanceVarName] = new Chart(ctx, {
-                type: 'doughnut', 
-                data: { labels, datasets: [{ data, backgroundColor: backgroundColors, borderWidth: 1, borderColor: '#fff' }] },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom', labels: { font: { size: 10 } } },
-                        tooltip: { callbacks: { label: (c) => `${c.label||''}: ${formatearMoneda(c.raw||0)} (${totalGeneral>0?((c.raw/totalGeneral)*100).toFixed(1):0}%)` } },
-                        datalabels: { formatter: (v) => { let p = totalGeneral>0?((v/totalGeneral)*100):0; return p > 5 ? `${p.toFixed(0)}%` : ''; }, color: '#fff', font: { weight: 'bold', size: 12 } }
-                    }
-                }
-            });
-        }
-        
-        function actualizarGraficoGastosPorMes(gastosDelPeriodo) {
-            const t = TRADUCTIONS[config.idioma];
-            const ctx = document.getElementById('chartHistoricoMesesCanvas').getContext('2d');
-            
-            const mesesLabels = MONTH_NAMES_FULL[config.idioma];
-            const mesesData = new Array(12).fill(0); 
-
-            gastosDelPeriodo.forEach(g => {
-                const mesIndex = new Date(g.fecha + 'T00:00:00').getMonth(); // 0-11
-                mesesData[mesIndex] += g.valor;
-            });
-
-            if (window.chartHistoricoMesesInstance) {
-                window.chartHistoricoMesesInstance.destroy();
-            }
-            
-            if (gastosDelPeriodo.length === 0) {
-                window.chartHistoricoMesesInstance = null;
-                return; 
-            }
-
-            window.chartHistoricoMesesInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: mesesLabels,
-                    datasets: [{
-                        label: t.expenses, // "Gastos"
-                        data: mesesData,
-                        backgroundColor: 'rgba(0, 123, 255, 0.6)', 
-                        borderColor: 'rgba(0, 123, 255, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${formatearMoneda(c.raw || 0)}` } },
-                        datalabels: { display: false }
-                    },
-                    scales: { y: { beginAtZero: true } }
-                }
-            });
-        }
-
-        function inicializarSelectoresMesAnio() {
-            const hoy = new Date();
-            const mesActual = hoy.getMonth();
-            const anioActual = hoy.getFullYear();
-            const anioSiguiente = anioActual + 1;
-            
-            const selectMes = document.getElementById('filtroMes');
-            const selectAnioMensual = document.getElementById('filtroAnioMensual');
-            const selectAnioHistorico = document.getElementById('filtroAnioHistorico');
-            selectMes.innerHTML = ''; selectAnioMensual.innerHTML = ''; selectAnioHistorico.innerHTML = '';
-            
-            const anios = [...new Set(gastos.map(g => new Date(g.fecha + 'T00:00:00').getFullYear()))];
-            if (!anios.includes(anioActual)) anios.push(anioActual);
-            if (!anios.includes(anioSiguiente)) anios.push(anioSiguiente); 
-            
-            anios.sort((a, b) => b - a);
-            
-            anios.forEach(anio => {
-                selectAnioMensual.innerHTML += `<option value="${anio}">${anio}</option>`;
-                selectAnioHistorico.innerHTML += `<option value="${anio}">${anio}</option>`;
-            });
-            const nombresMeses = MONTH_NAMES_FULL[config.idioma];
-            nombresMeses.forEach((nombre, index) => { selectMes.innerHTML += `<option value="${index + 1}">${nombre}</option>`; });
-            
-            selectMes.value = mesActual + 1;
-            selectAnioMensual.value = anioActual;
-            selectAnioHistorico.value = anioActual;
-        }
-
-        function actualizarSelectCategorias() {
-            const selects = [document.getElementById('gastoCategoria'), document.getElementById('modalCategoria')];
-            selects.forEach(select => {
-                select.innerHTML = '';
-                config.categorias.forEach(cat => { select.innerHTML += `<option value="${cat}">${cat}</option>`; });
-            });
-        }
-        
-        function actualizarSugerenciasDescripciones(descripciones) {
-             const datalists = [document.getElementById('sugerenciasDescripciones'), document.getElementById('sugerenciasDescripcionesModal')];
-             datalists.forEach(datalist => {
-                 datalist.innerHTML = ''; descripciones.forEach(desc => { datalist.innerHTML += `<option value="${desc}"></option>`; });
-             });
-        }
-        
-        function renderizarTablaCategorias() {
-            const tbody = document.getElementById('tablaCategorias').querySelector('tbody');
-            tbody.innerHTML = '';
-            config.categorias.forEach((cat, index) => { 
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${cat}</td>
-                    <td class="td-acciones">
-                        <button class="btn btn-primary btn-accion-tabla" onclick="abrirModalCategoria(${index})"><i class="fas fa-pencil-alt"></i></button>
-                        <button class="btn btn-danger btn-accion-tabla" onclick="confirmarEliminarCategoria(${index})"><i class="fas fa-trash"></i></button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-        
-        function agregarCategoria() {
-            const input = document.getElementById('nuevaCategoria');
-            const nombre = input.value.trim();
-            if (nombre && !config.categorias.includes(nombre)) {
-                config.categorias.push(nombre); config.categorias.sort();
-                guardarConfig(); actualizarSelectCategorias(); renderizarTablaCategorias();
-                input.value = '';
-            } else if (config.categorias.includes(nombre)) {
-                mostrarToast(TRADUCTIONS[config.idioma].alertCatNombreExiste(nombre), 'error'); 
-            }
-        }
-        
-        function abrirModalCategoria(index) { 
-            const nombreAntiguo = config.categorias[index]; 
-            categoriaEditandoNombreAntiguo = nombreAntiguo;
-            document.getElementById('modalCategoriaNombre').value = nombreAntiguo;
-            document.getElementById('modalEdicionCategoria').style.display = 'block';
-            document.getElementById('modalCategoriaNombre').focus();
-        }
-
-        function cerrarModalCategoria() {
-            document.getElementById('modalEdicionCategoria').style.display = 'none';
-            categoriaEditandoNombreAntiguo = null;
-        }
-
-        function guardarEdicionCategoria() {
-            const nombreAntiguo = categoriaEditandoNombreAntiguo;
-            const nombreNuevo = document.getElementById('modalCategoriaNombre').value.trim();
-            
-            if (!nombreNuevo) {
-                mostrarToast(TRADUCTIONS[config.idioma].alertCatNombreVacio, 'error'); 
-                return;
-            }
-            if (nombreNuevo !== nombreAntiguo && config.categorias.includes(nombreNuevo)) {
-                mostrarToast(TRADUCTIONS[config.idioma].alertCatNombreExiste(nombreNuevo), 'error'); 
-                return;
-            }
-            
-            gastos.forEach(gasto => {
-                if (gasto.categoria === nombreAntiguo) {
-                    gasto.categoria = nombreNuevo;
-                }
-            });
-            guardarGastos(); 
-
-            const index = config.categorias.indexOf(nombreAntiguo);
-            if (index !== -1) {
-                config.categorias[index] = nombreNuevo;
-                config.categorias.sort();
-                guardarConfig(); 
-            }
-
-            renderizarTablaCategorias();
-            actualizarSelectCategorias();
-            cerrarModalCategoria();
-            
-            actualizarResumenMensual();
-            actualizarResumenHistorico();
-            mostrarToast(TRADUCTIONS[config.idioma].toastCategoriaGuardada, 'success'); 
-        }
-
-        function confirmarEliminarCategoria(index) { 
-            const nombreCategoria = config.categorias[index]; 
-            const enUso = gastos.some(gasto => gasto.categoria === nombreCategoria);
-            
-            if (enUso) {
-                mostrarToast(TRADUCTIONS[config.idioma].alertCatNoSePuedeBorrar(nombreCategoria), 'error'); 
-                return;
-            }
-            
-            mostrarModalConfirmacion(
-                TRADUCTIONS[config.idioma].delete, 
-                TRADUCTIONS[config.idioma].modalConfirmDeleteCat(nombreCategoria),
-                () => {
-                    eliminarCategoria(index);
-                }
-            );
-        }
-        
-        function eliminarCategoria(index) {
-            if (index > -1) {
-                config.categorias.splice(index, 1);
-                guardarConfig();
-                renderizarTablaCategorias();
-                actualizarSelectCategorias();
-                mostrarToast(TRADUCTIONS[config.idioma].toastCategoriaEliminada, 'success');
-            }
-        }
-
-        function abrirModalEdicion(id) { 
-            const gasto = gastos.find(g => g.id === id);
-            if (!gasto) { 
-                mostrarToast(TRADUCTIONS[config.idioma].alertFoundError, 'error'); 
-                return; 
-            }
-            gastoEditandoId = id;
-            document.getElementById('modalFecha').value = gasto.fecha;
-            document.getElementById('modalCategoria').value = gasto.categoria;
-            document.getElementById('modalDescripcion').value = gasto.descripcion;
-            document.getElementById('modalValor').value = (gasto.valor).toLocaleString(config.idioma, {useGrouping: false, minimumFractionDigits: 2});
-            document.querySelector(`input[name="modalTipoPago"][value="${gasto.tipoPago}"]`).checked = true;
-            document.getElementById('modalEdicion').style.display = 'block';
-        }
-        function cerrarModal() {
-            document.getElementById('modalEdicion').style.display = 'none';
-            gastoEditandoId = null;
-        }
-        function guardarEdicionDesdeModal() { 
-            if (!gastoEditandoId) return;
-            const fecha = document.getElementById('modalFecha').value;
-            const categoria = document.getElementById('modalCategoria').value;
-            const descripcion = document.getElementById('modalDescripcion').value.trim();
-            const valor = parsearValor(document.getElementById('modalValor').value);
-            const tipoPago = document.querySelector('input[name="modalTipoPago"]:checked').value;
-            
-            if (!fecha || !categoria || !descripcion || isNaN(valor) || valor <= 0) { 
-                mostrarToast(TRADUCTIONS[config.idioma].alertMissing, 'error'); 
-                return; 
-            }
-            
-            const index = gastos.findIndex(g => g.id === gastoEditandoId);
-            if (index !== -1) {
-                gastos[index] = { id: gastoEditandoId, fecha, categoria, descripcion, valor, tipoPago };
-                gastos.sort(sortData); 
-                guardarGastos();
-            }
-            cerrarModal();
-            mostrarToast(TRADUCTIONS[config.idioma].alertGuardado, 'success'); 
-            const vistaActiva = document.querySelector('.pantalla.activa').id;
-            mostrarPantalla(vistaActiva, document.querySelector(`.nav-tabs button[onclick*="'${vistaActiva}'"]`));
-        }
-        
-        function confirmarEliminarGasto() {
-            if (!gastoEditandoId) return;
-            
-            mostrarModalConfirmacion(
-                TRADUCTIONS[config.idioma].delete, 
-                TRADUCTIONS[config.idioma].confirmDelete,
-                () => {
-                    eliminarGastoDesdeModal();
-                }
-            );
-        }
-        
-        function eliminarGastoDesdeModal() { 
-            gastos = gastos.filter(g => g.id !== gastoEditandoId);
-            guardarGastos();
-            cerrarModal();
-            mostrarToast(TRADUCTIONS[config.idioma].toastGastoEliminado, 'success');
-            const vistaActiva = document.querySelector('.pantalla.activa').id;
-            mostrarPantalla(vistaActiva, document.querySelector(`.nav-tabs button[onclick*="'${vistaActiva}'"]`));
-        }
-
-        async function compartirArchivo(archivo, titulo) {
-            const t = TRADUCTIONS[config.idioma];
-            
-            if (navigator.share && navigator.canShare && navigator.canShare({ files: [archivo] })) {
-                try {
-                    await navigator.share({
-                        title: titulo,
-                        text: `Datos de ${t.logoTitle} (${archivo.name})`,
-                        files: [archivo]
-                    });
-                } catch (error) {
-                    if (error.name !== 'AbortError') { 
-                        console.error('Error al compartir:', error);
-                        descargarArchivo(archivo); 
-                    }
-                }
-            } else {
-                console.log('Web Share API no soportada, recurriendo a descarga.');
-                descargarArchivo(archivo);
-            }
-        }
-        
-        function descargarArchivo(archivo) {
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(archivo); 
-            link.href = url;
-            link.download = archivo.name;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        }
-
-        function getFechaFormateada() {
-            const d = new Date();
-            const dia = String(d.getDate()).padStart(2, '0');
-            const mes = String(d.getMonth() + 1).padStart(2, '0');
-            const anio = d.getFullYear();
-            return `${dia}-${mes}-${anio}`; 
-        }
-
-        async function exportarReporteCSV(tipo) { 
-            let gastosAExportar = [];
-            let nombreArchivo = "gastos_"; 
-            const fechaHoy = getFechaFormateada();
-
-            if (tipo === 'mensual') {
-                const mes = document.getElementById('filtroMes').value;
-                const anio = document.getElementById('filtroAnioMensual').value;
-                nombreArchivo = `Gastos_MES_${anio}-${mes}_(${fechaHoy}).csv`;
-                
-                const tipoPago = filtroPagoMensual; 
-                gastosAExportar = gastos.filter(g => { const fecha = new Date(g.fecha + 'T00:00:00'); return fecha.getFullYear() == anio && (fecha.getMonth() + 1) == mes; });
-                if (tipoPago !== 'TODOS') gastosAExportar = gastosAExportar.filter(g => g.tipoPago === tipoPago);
-                
-            } else if (tipo === 'historico') {
-                const anio = document.getElementById('filtroAnioHistorico').value;
-                nombreArchivo = `Gastos_AÑO_${anio}_(${fechaHoy}).csv`;
-                
-                const tipoPago = filtroPagoHistorico;
-                gastosAExportar = gastos.filter(g => new Date(g.fecha + 'T00:00:00').getFullYear() == anio);
-                if (tipoPago !== 'TODOS') gastosAExportar = gastosAExportar.filter(g => g.tipoPago === tipoPago);
-            } else {
-                return; 
-            }
-
-            if (gastosAExportar.length === 0) { 
-                mostrarToast(TRADUCTIONS[config.idioma].alertNoExport, 'warning'); 
-                return; 
-            }
-
-            let csvContent = "Fecha;Categoria;Descripcion;Valor;TipoPago;ID\n";
-            gastosAExportar.sort(sortData).forEach(g => { 
-                const desc = g.descripcion.replace(/;/g, " ").replace(/,/g, " "); 
-                const valorConComa = (g.valor).toFixed(2).replace('.', ',');
-                csvContent += `${g.fecha};${g.categoria};${desc};${valorConComa};${g.tipoPago};${g.id}\n`;
-            });
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8,' });
-            const file = new File([blob], nombreArchivo, { type: 'text/csv' });
-            await compartirArchivo(file, 'Reporte de Gastos');
-        }
-
-        async function compartirBackupJSON() {
-            const backupCompleto = {
-                gastos_v2: gastos,
-                config_v2: config
-            };
-            const jsonString = JSON.stringify(backupCompleto); 
-            const blob = new Blob([jsonString], { type: 'application/octet-stream' }); 
-            const fechaHoy = getFechaFormateada();
-            const nombreArchivo = `Gastos_TOTAL_(${fechaHoy}).bak`; 
-            const file = new File([blob], nombreArchivo, { type: 'application/octet-stream' });
-            
-            await compartirArchivo(file, 'Backup Control de Gastos');
-        }
-        
-        function importarDatos(event) { 
-            const file = event.target.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const texto = e.target.result;
-                    const t = TRADUCTIONS[config.idioma];
-                    
-                    if (file.name.endsWith('.json') || file.name.endsWith('.txt') || file.name.endsWith('.bak')) {
-                        const backupData = JSON.parse(texto);
-                        if (backupData.gastos_v2 && backupData.config_v2 && Array.isArray(backupData.config_v2.categorias)) {
-                            gastos = backupData.gastos_v2 || [];
-                            config = backupData.config_v2;
-                            
-                            gastos.sort(sortData);
-                            
-                            guardarGastos();
-                            localStorage.removeItem('ingresos_v2'); 
-                            localStorage.setItem('config_v2', JSON.stringify(config));
-                            mostrarToast(t.alertImportSuccessJSON, 'success'); 
-                        } else {
-                            throw new Error(t.alertImportErrorJSON);
-                        }
-                    } else if (file.name.endsWith('.csv')) {
-                        const lineas = texto.split('\n');
-                        if (lineas.length <= 1) throw new Error(t.alertCSVEmpty);
-                        
-                        const datosImportados = []; 
-                        for (let i = 1; i < lineas.length; i++) {
-                            const linea = lineas[i].trim(); if (linea === "") continue;
-                            
-                            const columnas = linea.split(';'); 
-                            if (columnas.length < 6) continue; 
-                            
-                            const fecha = columnas[0];
-                            const categoria = columnas[1];
-                            const descripcion = columnas[2];
-                            const valor = parsearValor(columnas[3]); 
-                            const tipoPago = columnas[4] || 'Contado';
-                            const id = parseInt(columnas[5], 10);
-
-                            if (!isNaN(id) && !isNaN(valor) && !gastos.find(g => g.id === id)) { 
-                                 datosImportados.push({ id, fecha, categoria, descripcion, valor, tipoPago });
-                                 if (!config.categorias.includes(categoria)) config.categorias.push(categoria); 
-                            }
-                        }
-                        if (datosImportados.length === 0) throw new Error(t.alertCSVEmpty);
-                        
-                        gastos.push(...datosImportados);
-                        gastos.sort(sortData); 
-                        guardarGastos(); 
-                        guardarConfig(); 
-                        mostrarToast(t.alertImportSuccess(datosImportados.length), 'success'); 
-                    } else {
-                        throw new Error("Tipo de archivo no soportado (.csv, .json, .txt, .bak)");
-                    }
-                    
-                    inicializarApp(); 
-                    mostrarPantalla('configuracion', document.querySelector('.nav-tabs button[onclick*="configuracion"]'));
-                    event.target.value = null; 
-
-                } catch (error) {
-                    mostrarToast(error.message, 'error'); 
-                    console.error("Error de importación:", error); 
-                    event.target.value = null;
-                }
-            };
-            reader.readAsText(file, 'UTF-8'); 
-        }
-
-        function confirmarLimpiarTodosLosDatos() { 
-            mostrarModalConfirmacion(
-                TRADUCTIONS[config.idioma].btnDeleteAll,
-                TRADUCTIONS[config.idioma].confirmDeleteAll,
-                () => {
-                    limpiarTodosLosDatos(); 
-                }
-            );
-        }
-
-        function limpiarTodosLosDatos() { 
-            localStorage.removeItem('gastos_v2');
-            localStorage.removeItem('ingresos_v2'); 
-            localStorage.removeItem('config_v2');
-            localStorage.removeItem('ultimoRecordatorioBackup');
-            window.location.reload(); 
-        }
-
-        if ('serviceWorker' in navigator) {
-          window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js').then(reg => console.log('SW registrado!')).catch(err => console.error('Error SW:', err));
-          });
-        }
-    </script>
 </body>
+
+<script>
+const MONTH_NAMES_FULL = { es: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'], en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] };
+const TRADUCTIONS = { es: { alertMissing: "Faltan datos.", alertGuardado: "¡Guardado!", alertNoExport: "Sin datos.", btnCargado: "¡Cargado!", errVal: "Ingresa monto", errCat: "Elige categoría" }, en: { alertMissing: "Missing data.", alertGuardado: "Saved!", alertNoExport: "No data.", btnCargado: "Loaded!", errVal: "Enter amount", errCat: "Pick category" } };
+
+let gastos = []; let config = {}; let gastoEditandoId = null; let categoriaEditandoNombreAntiguo = null;
+let confirmCallback = null; let toastTimeout = null;
+let chartMensualInstance = null; let chartHistoricoInstance = null; let chartHistoricoMesesInstance = null;
+let filtroCategoriaHistorico = 'TODOS'; const ITEMS_PER_PAGE = 25; let paginaActual = 1; let listaDetalleActual = []; let paginaActualGastosMes = 1;
+let calcInput = "0"; let calcCat = ""; let calcPay = "Contado";
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels); 
+    cargarDatos();
+    inicializarUI();
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+    
+    document.addEventListener('keydown', (e) => {
+        if (document.activeElement.tagName === 'INPUT') {
+            if (e.key === 'Enter') guardarGastoCalc(); 
+            return;
+        }
+        if (!isNaN(e.key) && e.key !== ' ') appendNum(e.key);
+        if (e.key === '.' || e.key === ',') appendNum('.');
+        if (e.key === 'Backspace') delNum();
+        if (e.key === 'Enter') guardarGastoCalc();
+        if (e.key === 'Escape') cerrarModal();
+    });
+});
+
+function sanitizar(str) { return str ? str.replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])) : ''; }
+
+function cargarDatos() {
+    const def = { moneda: '$', idioma: 'es', categorias: ['Comida', 'Transporte', 'Hogar', 'Salud', 'Ocio', 'Otros'] };
+    const loaded = JSON.parse(localStorage.getItem('config_v2'));
+    config = loaded ? { ...def, ...loaded } : def;
+    if(!Array.isArray(config.categorias)) config.categorias = def.categorias;
+    gastos = JSON.parse(localStorage.getItem('gastos_v2')) || [];
+    gastos.forEach(g => { if (!g.tipoPago) g.tipoPago = 'Contado'; });
+    gastos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || b.id - a.id);
+
+    if(document.getElementById('configMoneda')) document.getElementById('configMoneda').value = config.moneda;
+    if(document.getElementById('configIdioma')) document.getElementById('configIdioma').value = config.idioma;
+    
+    if(document.getElementById('calcDate')) {
+        document.getElementById('calcDate').value = new Date().toISOString().split('T')[0];
+        actualizarLabelFecha();
+        determinarPagoMasUsado(); 
+        actualizarSugerenciasDescripciones( [...new Set(gastos.map(g => g.descripcion))] ); 
+        actualizarCatScroller();
+        renderizarGastosDelMes();
+        actualizarDisplayCalc();
+    }
+    
+    actualizarSelectCategorias(); 
+    renderizarTablaCategorias();
+    inicializarSelectoresMesAnio();
+    aplicarIdioma();
+}
+
+function aplicarIdioma() {
+    const lang = config.idioma;
+    const t = TRADUCTIONS[lang];
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if(t[key]) el.textContent = t[key];
+    });
+    document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+        const key = el.getAttribute('data-i18n-ph');
+        if(t[key]) el.placeholder = t[key];
+    });
+    const sm = document.getElementById('filtroMes');
+    if(sm) {
+        const valAnterior = sm.value; 
+        sm.innerHTML = '';
+        MONTH_NAMES_FULL[lang].forEach((m, i) => sm.add(new Option(m, i+1)));
+        if(valAnterior) sm.value = valAnterior;
+    }
+}
+
+function determinePagoMasUsado() {
+    if (gastos.length === 0) return;
+    const counts = {};
+    gastos.forEach(g => { counts[g.tipoPago] = (counts[g.tipoPago] || 0) + 1; });
+    const winner = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b, 'Contado');
+    setPayment(winner);
+}
+function determinarPagoMasUsado() { determinePagoMasUsado(); }
+
+// AI + UI EXPANSION
+function detectingCategoriaInteligente() {
+    const desc = document.getElementById('calcDesc').value.toLowerCase();
+    const catContainer = document.getElementById('catScroller');
+    
+    if (desc.length < 3) {
+        resetSeleccionCategoria();
+        return;
+    }
+
+    try {
+        const regex = new RegExp('\\b' + desc, 'i');
+        const matches = gastos.filter(g => regex.test(g.descripcion));
+        if (matches.length > 0) {
+            catContainer.classList.remove('expanded');
+            const catCounts = {};
+            matches.forEach(g => { catCounts[g.categoria] = (catCounts[g.categoria] || 0) + 1; });
+            const bestCat = Object.keys(catCounts).reduce((a, b) => catCounts[a] > catCounts[b] ? a : b);
+            if (bestCat !== calcCat) {
+                selectCatPill(bestCat);
+                actualizarCatScroller(bestCat); 
+            }
+        } else {
+            resetSeleccionCategoria();
+            catContainer.classList.add('expanded'); // Expandir UI
+        }
+    } catch(e) {}
+}
+function detectarCategoriaInteligente() { detectingCategoriaInteligente(); } 
+
+function resetSeleccionCategoria() {
+    calcCat = ""; 
+    actualizarCatScroller(null); 
+    document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('selected'));
+    const label = document.getElementById('displayCatLabel');
+    label.textContent = ""; // Punto 1: Vacio por defecto
+    document.getElementById('catScroller').classList.remove('expanded');
+}
+
+function abrirSelectorFecha() { document.getElementById('calcDate').showPicker(); }
+function actualizarLabelFecha() {
+    const d = document.getElementById('calcDate').value;
+    const hoy = new Date().toISOString().split('T')[0];
+    document.getElementById('dateBtnLabel').textContent = (d === hoy) ? "Hoy" : d.split('-').reverse().slice(0,2).join('/');
+}
+
+function appendNum(num) {
+    if (calcInput === "0" && num !== ".") calcInput = num;
+    else if (num === "." && calcInput.includes(".")) return;
+    else if (calcInput.replace('.','').length >= 9) return;
+    else calcInput += num;
+    actualizarDisplayCalc();
+}
+function delNum() {
+    calcInput = calcInput.length > 1 ? calcInput.slice(0, -1) : "0";
+    actualizarDisplayCalc();
+}
+function setPayment(type) {
+    calcPay = type;
+    document.querySelectorAll('.pay-pill').forEach(p => p.classList.remove('selected'));
+    if(type==='Contado') document.getElementById('pillContado').classList.add('selected');
+    if(type==='Tarjeta') document.getElementById('pillTarjeta').classList.add('selected');
+    if(type==='Transferencia') document.getElementById('pillTransf').classList.add('selected');
+}
+function selectCatPill(cat) {
+    calcCat = cat;
+    document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('selected'));
+    const pill = document.getElementById(`cat-${cat.replace(/\s+/g, '-')}`);
+    if(pill) pill.classList.add('selected');
+    const label = document.getElementById('displayCatLabel');
+    label.textContent = cat;
+    label.style.color = 'var(--primary-color)';
+    label.style.fontWeight = 'bold';
+    document.getElementById('catScroller').classList.remove('expanded');
+}
+function actualizarDisplayCalc() {
+    document.getElementById('displayAmount').textContent = `${config.moneda} ${parseFloat(calcInput).toLocaleString('es-EC', {minimumFractionDigits: 0, maximumFractionDigits: 2})}`;
+}
+
+function actualizarCatScroller(priorityCat = null) {
+    const container = document.getElementById('catScroller');
+    if(!container) return;
+    container.innerHTML = '';
+    const counts = {};
+    config.categorias.forEach(c => counts[c] = 0);
+    gastos.forEach(g => { if(counts[g.categoria] !== undefined) counts[g.categoria]++; });
+    let sortedCats = [...config.categorias].sort((a,b) => counts[b] - counts[a]);
+    if (priorityCat && sortedCats.includes(priorityCat)) {
+        sortedCats = sortedCats.filter(c => c !== priorityCat);
+        sortedCats.unshift(priorityCat);
+    }
+    sortedCats.forEach(c => {
+        const pill = document.createElement('div');
+        pill.className = 'cat-pill';
+        if(c === calcCat) pill.classList.add('selected');
+        pill.id = `cat-${c.replace(/\s+/g, '-')}`;
+        pill.textContent = c;
+        pill.onclick = () => selectCatPill(c);
+        container.appendChild(pill);
+    });
+}
+
+function guardarGastoCalc() {
+    const val = parseFloat(calcInput);
+    const displayContainer = document.getElementById('displayContainer');
+    const catContainer = document.getElementById('catScroller');
+
+    if (!val || val <= 0) {
+        displayContainer.classList.add('shake-error');
+        mostrarToast(TRADUCTIONS[config.idioma].errVal, 'error');
+        setTimeout(() => displayContainer.classList.remove('shake-error'), 500);
+        return;
+    }
+
+    if (!calcCat) {
+        catContainer.classList.add('shake-error');
+        catContainer.classList.add('expanded'); 
+        mostrarToast(TRADUCTIONS[config.idioma].errCat, 'error');
+        setTimeout(() => catContainer.classList.remove('shake-error'), 500);
+        return;
+    }
+
+    let desc = sanitizar(document.getElementById('calcDesc').value.trim());
+    if (!desc) desc = "Sin descripción";
+    const fecha = document.getElementById('calcDate').value;
+
+    gastos.push({ id: Date.now(), fecha, categoria: calcCat, descripcion: desc, valor: val, tipoPago: calcPay });
+    gastos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || b.id - a.id);
+    localStorage.setItem('gastos_v2', JSON.stringify(gastos));
+    
+    actualizarSugerenciasDescripciones( [...new Set(gastos.map(g => g.descripcion))] );
+    calcInput = "0";
+    document.getElementById('calcDesc').value = "";
+    resetSeleccionCategoria();
+    actualizarDisplayCalc();
+    renderizarGastosDelMes();
+    determinarPagoMasUsado();
+    mostrarToast(TRADUCTIONS[config.idioma].alertGuardado, 'success');
+}
+
+function inicializarUI() {
+    mostrarPantalla('gasto', document.querySelector('.nav-tabs button.active'));
+    document.getElementById('inputImportar').addEventListener('change', importarDatos);
+    document.querySelectorAll('input[name="filtroTipoPagoMensual"]').forEach(r => {
+        r.addEventListener('change', () => {
+            actualizarResumenMensual();
+        });
+    });
+    document.querySelectorAll('input[name="filtroTipoPagoHistorico"]').forEach(r => {
+        r.addEventListener('change', () => {
+            actualizarResumenHistorico();
+        });
+    });
+}
+function selectFilterPay(label) {
+    const inputId = label.getAttribute('for');
+    document.getElementById(inputId).checked = true;
+    document.getElementById(inputId).dispatchEvent(new Event('change'));
+}
+
+function mostrarPantalla(id, btn) {
+    window.scrollTo(0, 0);
+    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+    document.getElementById(id).classList.add('activa');
+    document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    paginaActual = 1; paginaActualGastosMes = 1;
+    if (id === 'gasto') actualizarCatScroller();
+    if (id === 'mensual') {
+        document.getElementById('detalleMensual').style.display = 'none';
+        document.getElementById('chartMensualContainer').style.display = 'block';
+        actualizarResumenMensual();
+    }
+    if (id === 'historico') {
+        document.getElementById('detalleHistorico').style.display = 'none';
+        document.getElementById('chartHistoricoContainer').style.display = 'block';
+        filtroCategoriaHistorico = 'TODOS';
+        actualizarResumenHistorico();
+    }
+}
+
+/* --- FUNCIONES DE APOYO --- */
+function renderizarGastosDelMes() {
+    const tbody = document.querySelector('#tablaUltimosGastos tbody'); tbody.innerHTML = '';
+    const hoy = new Date();
+    const lista = gastos.filter(g => { const [y, m] = g.fecha.split('-'); return parseInt(m) === (hoy.getMonth() + 1) && parseInt(y) === hoy.getFullYear(); });
+    let total = 0; lista.forEach(g => total += g.valor);
+    document.getElementById('totalUltimosGastos').textContent = formatearMoneda(total);
+    const totalPaginas = Math.ceil(lista.length / ITEMS_PER_PAGE) || 1;
+    if(paginaActualGastosMes > totalPaginas) paginaActualGastosMes = totalPaginas;
+    const inicio = (paginaActualGastosMes - 1) * ITEMS_PER_PAGE;
+    const paginados = lista.slice(inicio, inicio + ITEMS_PER_PAGE);
+    paginados.forEach(g => {
+        const tr = document.createElement('tr'); tr.onclick = () => abrirModalEdicion(g.id);
+        const [y, m, d] = g.fecha.split('-');
+        tr.innerHTML = `<td>${d}/${m}</td><td>${g.descripcion}<div class="gasto-categoria-subtexto">${g.categoria}</div></td><td class="gasto-valor">${formatearMoneda(g.valor)}</td>`;
+        tbody.appendChild(tr);
+    });
+    const txt = config.idioma === 'es' ? 'reg' : 'rec';
+    document.getElementById('pageInfoPrincipal').textContent = `Pág ${paginaActualGastosMes}/${totalPaginas} (${lista.length} ${txt})`;
+}
+function cambiarPaginaPrincipal(delta) {
+    const hoy = new Date();
+    const lista = gastos.filter(g => { const [y, m] = g.fecha.split('-'); return parseInt(m) === (hoy.getMonth() + 1) && parseInt(y) === hoy.getFullYear(); });
+    const max = Math.ceil(lista.length / ITEMS_PER_PAGE);
+    const n = paginaActualGastosMes + delta;
+    if(n>=1 && n<=max) { paginaActualGastosMes = n; renderizarGastosDelMes(); }
+}
+function cambiarPagina(delta) {
+    const max = Math.ceil(listaDetalleActual.length/ITEMS_PER_PAGE)||1;
+    const n = paginaActual+delta;
+    if(n>=1 && n<=max) {
+        paginaActual=n; 
+        const id = document.getElementById('mensual').classList.contains('activa') ? 'Mensual' : 'Historico';
+        renderizarTablaDetallePaginada(`tablaDetalle${id}`,`totalDetalle${id}`,`pageInfo${id}`);
+    }
+}
+function renderizarTablaDetallePaginada(tId, totId, lblId) {
+    const tbody = document.querySelector(`#${tId} tbody`); tbody.innerHTML='';
+    let tot=0; listaDetalleActual.forEach(g=>tot+=g.valor); document.getElementById(totId).textContent=formatearMoneda(tot);
+    const max = Math.ceil(listaDetalleActual.length/ITEMS_PER_PAGE)||1;
+    const ini=(paginaActual-1)*ITEMS_PER_PAGE;
+    const slice = listaDetalleActual.slice(ini, ini+ITEMS_PER_PAGE);
+    slice.forEach(g=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${g.fecha.split('-')[2]}/${g.fecha.split('-')[1]}</td><td>${g.descripcion}</td><td class="gasto-valor">${formatearMoneda(g.valor)}</td>`;
+        tbody.appendChild(tr);
+    });
+    const txt = config.idioma === 'es' ? 'reg' : 'rec';
+    document.getElementById(lblId).textContent=`Pág ${paginaActual}/${max} (${listaDetalleActual.length} ${txt})`;
+}
+function formatearMoneda(v) { return `${config.moneda} ${(v||0).toLocaleString('es-EC', {minimumFractionDigits:2})}`; }
+function mostrarToast(m, t) { const x = document.getElementById('toast'); x.textContent=m; x.className=`show ${t}`; clearTimeout(toastTimeout); toastTimeout=setTimeout(()=>x.className='',3000); }
+function inicializarSelectoresMesAnio() {
+    const sa = document.getElementById('filtroAnioMensual'); const sh = document.getElementById('filtroAnioHistorico'); const sm = document.getElementById('filtroMes');
+    sa.innerHTML=''; sh.innerHTML=''; sm.innerHTML='';
+    const dY = gastos.map(g => parseInt(g.fecha.split('-')[0]));
+    const curY = new Date().getFullYear();
+    const min = dY.length ? Math.min(...dY, curY) : curY;
+    for(let y=Math.max(...dY, 2030); y>=min; y--) { sa.add(new Option(y,y)); sh.add(new Option(y,y)); }
+    MONTH_NAMES_FULL[config.idioma].forEach((m,i)=>sm.add(new Option(m,i+1)));
+    sm.value = new Date().getMonth()+1; sa.value=curY; sh.value=curY;
+}
+
+// Punto 4: Totales en Tarjetas (Pills) CORREGIDO IDs
+function actualizarResumenMensual() {
+    const mes = document.getElementById('filtroMes').value;
+    const anio = document.getElementById('filtroAnioMensual').value;
+    const pago = document.querySelector('input[name="filtroTipoPagoMensual"]:checked').value;
+    
+    // 1. Totales Reales (pre-filtro)
+    let listaBase = gastos.filter(g => { const [y, m] = g.fecha.split('-'); return parseInt(y) == anio && parseInt(m) == mes; });
+    
+    let sumTotal=0, sumEfec=0, sumTarj=0, sumTrans=0;
+    listaBase.forEach(g => {
+        sumTotal += g.valor;
+        if(g.tipoPago==='Contado') sumEfec += g.valor;
+        if(g.tipoPago==='Tarjeta') sumTarj += g.valor;
+        if(g.tipoPago==='Transferencia') sumTrans += g.valor;
+    });
+
+    // IDs Restaurados de v1.0
+    document.getElementById('sum-total-mensual').textContent = formatearMoneda(sumTotal);
+    document.getElementById('sum-contado-mensual').textContent = formatearMoneda(sumEfec);
+    document.getElementById('sum-tarjeta-mensual').textContent = formatearMoneda(sumTarj);
+    document.getElementById('sum-transf-mensual').textContent = formatearMoneda(sumTrans);
+
+    // 2. Filtro para tabla y grafico
+    let listaFiltrada = listaBase;
+    if(pago !== 'TODOS') listaFiltrada = listaFiltrada.filter(g=>g.tipoPago === pago);
+
+    const tbody = document.querySelector('#tablaResumenMensual tbody'); tbody.innerHTML='';
+    const d = {}; let totFilt=0; listaFiltrada.forEach(g=>{d[g.categoria]=(d[g.categoria]||0)+g.valor; totFilt+=g.valor;});
+    
+    Object.entries(d).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{
+        const tr=document.createElement('tr');
+        const pct = totFilt>0?Math.round((v/totFilt)*100):0;
+        tr.innerHTML=`<td>${k}</td><td class="gasto-valor">${formatearMoneda(v)}</td><td class="col-porcentaje">${pct}%</td>`;
+        tr.onclick=()=>verDetalleMensual(k, listaFiltrada); // Punto 5
+        tbody.appendChild(tr);
+    });
+    document.getElementById('totalResumenMensual').textContent=formatearMoneda(totFilt);
+    actualizarGrafico(listaFiltrada, 'chartMensualCanvas', 'doughnut');
+}
+
+function actualizarResumenHistorico(reset) {
+    const anio = document.getElementById('filtroAnioHistorico').value;
+    const pago = document.querySelector('input[name="filtroTipoPagoHistorico"]:checked').value;
+    
+    // 1. Totales Reales
+    let listaBase = gastos.filter(g=>g.fecha.startsWith(anio));
+    let sumTotal=0, sumEfec=0, sumTarj=0, sumTrans=0;
+    listaBase.forEach(g => {
+        sumTotal += g.valor;
+        if(g.tipoPago==='Contado') sumEfec += g.valor;
+        if(g.tipoPago==='Tarjeta') sumTarj += g.valor;
+        if(g.tipoPago==='Transferencia') sumTrans += g.valor;
+    });
+
+    // IDs Restaurados de v1.0
+    document.getElementById('sum-total-historico').textContent = formatearMoneda(sumTotal);
+    document.getElementById('sum-contado-historico').textContent = formatearMoneda(sumEfec);
+    document.getElementById('sum-tarjeta-historico').textContent = formatearMoneda(sumTarj);
+    document.getElementById('sum-transf-historico').textContent = formatearMoneda(sumTrans);
+
+    // 2. Filtro
+    let listaFiltrada = listaBase;
+    if(pago !== 'TODOS') listaFiltrada = listaFiltrada.filter(g=>g.tipoPago === pago);
+
+    const tbody = document.querySelector('#tablaResumenHistorico tbody'); tbody.innerHTML='';
+    const d = {}; let totFilt=0; listaFiltrada.forEach(g=>{d[g.categoria]=(d[g.categoria]||0)+g.valor; totFilt+=g.valor;});
+    Object.entries(d).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{
+        const tr=document.createElement('tr');
+        const pct = totFilt>0?Math.round((v/totFilt)*100):0;
+        tr.innerHTML=`<td>${k}</td><td class="gasto-valor">${formatearMoneda(v)}</td><td class="col-porcentaje">${pct}%</td>`;
+        tr.onclick=()=>verDetalleHistorico(k, listaFiltrada); // Punto 5
+        tbody.appendChild(tr);
+    });
+    document.getElementById('totalResumenHistorico').textContent=formatearMoneda(totFilt);
+    actualizarGrafico(listaFiltrada, 'chartHistoricoCanvas', 'doughnut');
+    actualizarGraficoBarras(listaFiltrada);
+}
+
+function verDetalleMensual(cat, listaFull) {
+    document.getElementById('chartMensualContainer').style.display='none';
+    document.getElementById('detalleMensual').style.display='block';
+    document.getElementById('detalleCategoriaMensual').textContent=cat;
+    listaDetalleActual = listaFull.filter(g=>g.categoria===cat);
+    paginaActual=1; renderizarTablaDetallePaginada('tablaDetalleMensual','totalDetalleMensual','pageInfoMensual');
+    document.getElementById('detalleMensual').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function verDetalleHistorico(cat, listaFull) {
+    document.getElementById('chartHistoricoContainer').style.display='none';
+    document.getElementById('detalleHistorico').style.display='block';
+    document.getElementById('detalleCategoriaHistorico').textContent=cat;
+    listaDetalleActual = listaFull.filter(g=>g.categoria===cat);
+    paginaActual=1; renderizarTablaDetallePaginada('tablaDetalleHistorico','totalDetalleHistorico','pageInfoHistorico');
+    document.getElementById('detalleHistorico').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function actualizarGrafico(l, id, tipo) {
+    const ctx=document.getElementById(id).getContext('2d');
+    const d={}; let tot=0; l.forEach(g=>{d[g.categoria]=(d[g.categoria]||0)+g.valor; tot+=g.valor;});
+    if(window[id+'Inst']) window[id+'Inst'].destroy();
+    window[id+'Inst'] = new Chart(ctx, {
+        type: tipo,
+        data: { labels:Object.keys(d), datasets:[{data:Object.values(d), backgroundColor:['#2563EB','#10B981','#F59E0B','#8B5CF6','#EC4899','#06B6D4'], borderWidth:0}] },
+        options: { 
+            responsive:true, maintainAspectRatio:false, 
+            plugins: { 
+                legend:{display:false}, 
+                // Punto 6: Decimales en porcentaje
+                datalabels:{
+                    color:'white', 
+                    display:(ctx)=>ctx.dataset.data[ctx.dataIndex]/tot > 0.05,
+                    formatter: (value) => {
+                        if(tot === 0) return "0%";
+                        return (value * 100 / tot).toFixed(2) + "%";
+                    }
+                } 
+            } 
+        }
+    });
+}
+function actualizarGraficoBarras(l) {
+    const ctx=document.getElementById('chartHistoricoMesesContainer').querySelector('canvas').getContext('2d');
+    const d=Array(12).fill(0); l.forEach(g=>d[parseInt(g.fecha.split('-')[1])-1]+=g.valor);
+    if(chartHistoricoMesesInstance) chartHistoricoMesesInstance.destroy();
+    chartHistoricoMesesInstance = new Chart(ctx, {
+        type:'bar', data:{labels:MONTH_NAMES_FULL[config.idioma].map(m=>m.substr(0,3)), datasets:[{data:d, backgroundColor:'#2563EB'}]},
+        options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, datalabels:{display:false}}}
+    });
+}
+function abrirModalEdicion(id) { gastoEditandoId=id; const g=gastos.find(x=>x.id===id); document.getElementById('modalValor').value=g.valor; document.getElementById('modalDescripcion').value=g.descripcion; document.getElementById('modalCategoria').value=g.categoria; document.getElementById('modalFecha').value=g.fecha; document.getElementById('modalEdicion').style.display='block'; }
+function cerrarModal() { document.getElementById('modalEdicion').style.display='none'; }
+function guardarEdicionDesdeModal() { 
+    const g=gastos.find(x=>x.id===gastoEditandoId);
+    if(g) {
+        g.fecha=document.getElementById('modalFecha').value;
+        g.categoria=document.getElementById('modalCategoria').value;
+        g.descripcion=sanitizar(document.getElementById('modalDescripcion').value);
+        g.valor=parseFloat(document.getElementById('modalValor').value);
+        g.tipoPago=document.querySelector('input[name="modalTipoPago"]:checked').value;
+        localStorage.setItem('gastos_v2', JSON.stringify(gastos));
+        location.reload();
+    }
+}
+function confirmarEliminarGasto() { if(confirm('Borrar?')) { gastos=gastos.filter(g=>g.id!==gastoEditandoId); localStorage.setItem('gastos_v2', JSON.stringify(gastos)); location.reload(); } }
+function cambiarConfig(k,v) { config[k]=v; localStorage.setItem('config_v2', JSON.stringify(config)); location.reload(); }
+function agregarCategoria() { const n=sanitizar(document.getElementById('nuevaCategoria').value); config.categorias.push(n); localStorage.setItem('config_v2', JSON.stringify(config)); cargarDatos(); }
+function actualizarSelectCategorias() { const s=document.getElementById('modalCategoria'); s.innerHTML=''; config.categorias.forEach(c=>s.add(new Option(c,c))); }
+function renderizarTablaCategorias() { const t=document.querySelector('#tablaCategorias tbody'); t.innerHTML=''; config.categorias.forEach((c,i)=>t.innerHTML+=`<tr><td>${c}</td><td style="text-align:center"><button class="btn-accion-tabla btn-accion-editar" onclick="abrirModalCategoria(${i})"><i class="fas fa-pen"></i></button><button class="btn-accion-tabla btn-accion-borrar" onclick="borrarCat(${i})"><i class="fas fa-trash"></i></button></td></tr>`); }
+function abrirModalCategoria(i) { categoriaEditandoNombreAntiguo = config.categorias[i]; document.getElementById('modalCategoriaNombre').value=categoriaEditandoNombreAntiguo; document.getElementById('modalEdicionCategoria').style.display='block'; }
+function borrarCat(i) { config.categorias.splice(i,1); localStorage.setItem('config_v2', JSON.stringify(config)); cargarDatos(); }
+function guardarEdicionCategoria() { 
+    const n = sanitizar(document.getElementById('modalCategoriaNombre').value);
+    config.categorias[config.categorias.indexOf(categoriaEditandoNombreAntiguo)] = n;
+    gastos.forEach(g => { if(g.categoria===categoriaEditandoNombreAntiguo) g.categoria=n; });
+    localStorage.setItem('config_v2', JSON.stringify(config)); localStorage.setItem('gastos_v2', JSON.stringify(gastos)); location.reload();
+}
+function cerrarModalCategoria() { document.getElementById('modalEdicionCategoria').style.display='none'; }
+function cerrarModalConfirmacion() { document.getElementById('modalConfirmacion').style.display='none'; }
+function generarYCompartirCSV(tipo) {
+    let data = []; let name = '';
+    if(tipo==='mensual') {
+        const m=document.getElementById('filtroMes').value; const a=document.getElementById('filtroAnioMensual').value;
+        data=gastos.filter(g=>{const[y,mm]=g.fecha.split('-'); return y==a && mm==m;});
+        name=`Gastos_${m}_${a}`;
+    } else {
+        const a=document.getElementById('filtroAnioHistorico').value;
+        data=gastos.filter(g=>g.fecha.startsWith(a));
+        name=`Gastos_${a}`;
+    }
+    if(!data.length) return alert('No hay datos');
+    let csv = "\uFEFFFecha;Categoría;Descripción;Valor;TipoPago\n";
+    data.forEach(g=>{
+        let v=g.valor.toString(); if(config.idioma==='es') v=v.replace('.',',');
+        csv+=`${g.fecha};${g.categoria};${g.descripcion};${v};${g.tipoPago}\n`;
+    });
+    const f=new File([new Blob([csv],{type:'text/csv'})], `${name}.csv`, {type:'text/csv'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(f); a.download=f.name; a.click();
+    if(navigator.canShare && navigator.canShare({files:[f]})) navigator.share({files:[f], title:'Gastos'});
+}
+function compartirBackupJSON() {
+    const txt = JSON.stringify({gastos_v2:gastos, config_v2:config}, null, 2);
+    const f = new File([new Blob([txt],{type:'text/plain'})], `Backup_${new Date().toISOString()}.txt`, {type:'text/plain'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(f); a.download=f.name; a.click();
+    if(navigator.canShare && navigator.canShare({files:[f]})) navigator.share({files:[f], title:'Backup'});
+}
+function importarDatos(e) {
+    const f = e.target.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = (ev) => {
+        try {
+            const d = JSON.parse(ev.target.result);
+            if(d.gastos_v2) { localStorage.setItem('gastos_v2', JSON.stringify(d.gastos_v2)); localStorage.setItem('config_v2', JSON.stringify(d.config_v2)); location.reload(); }
+        } catch { alert('Error archivo'); }
+    };
+    r.readAsText(f);
+}
+function confirmarLimpiarTodosLosDatos() { if(confirm('¿Borrar todo?')) { localStorage.clear(); location.reload(); } }
+function actualizarSugerenciasDescripciones(l) { document.getElementById('sugerenciasDescripciones').innerHTML=l.map(d=>`<option value="${d}">`).join(''); }
+</script>
 </html>
