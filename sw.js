@@ -1,11 +1,11 @@
-const CACHE_NAME = 'control-gastos-cache-v6';
+const CACHE_NAME = 'control-gastos-cache-v1'; // ¡VERSIÓN ACTUALIZADA!
 // Lista de archivos base para que la app funcione offline.
 const urlsToCache = [
   './',
-  'controlgastos.html', // Sin el ./
-  'icon-192.png',       // Sin el ./
-  'icon-512.png',       // Sin el ./
-  'manifest.json',      // ¡Añadido!
+  'controlgastos.html', 
+  'manifest.json',      
+  'icon-192.png',       
+  'icon-512.png',       
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css',
   'https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js',
   'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0'
@@ -16,7 +16,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('Cache abierto');
+        console.log('Cache abierto: ' + CACHE_NAME);
         return cache.addAll(urlsToCache);
       })
   );
@@ -32,15 +32,13 @@ self.addEventListener('fetch', (event) => {
           return response;
         }
 
-        // Si no, la busca en la red
+        // Si no, la busca en la red (Cache, then Network)
         return fetch(event.request).then(
           (response) => {
-            // Si la respuesta no es válida o no es de un tipo que cacheamos, la devuelve sin cachear
             if (!response || response.status !== 200 || (response.type !== 'basic' && response.type !== 'cors')) {
               return response;
             }
 
-            // Clona la respuesta para poder guardarla y devolverla
             const responseToCache = response.clone();
 
             caches.open(CACHE_NAME)
@@ -63,15 +61,11 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheWhitelist.indexOf(cacheName) === -1) {
+            // Elimina cachés que no están en la lista blanca (los antiguos)
             return caches.delete(cacheName);
           }
         })
       );
     })
   );
-
 });
-
-
-
-
