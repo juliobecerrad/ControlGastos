@@ -691,11 +691,9 @@ function agregarGasto() {
     gastos.push(nuevoGasto);
     guardarGastos();
     
-    // --- ACTUALIZACION EN SEGUNDO PLANO ---
     renderizarGastosDelMes();
     actualizarResumenMensual();
     actualizarResumenHistorico();
-    // -------------------------------------
 
     document.getElementById('gastoDescripcion').value = '';
     document.getElementById('gastoValor').value = '';
@@ -703,6 +701,11 @@ function agregarGasto() {
 }
 
 function actualizarResumenMensual() {
+    // --- LÍNEAS AGREGADAS: RESETEAR VISTA DETALLE AL INICIO ---
+    document.getElementById('detalleMensual').style.display = 'none';
+    document.getElementById('chartMensualContainer').style.display = 'block';
+    // ---------------------------------------------------------
+
     const mes = document.getElementById('filtroMes').value;
     const anio = document.getElementById('filtroAnioMensual').value;
     if(!mes || !anio) return;
@@ -892,11 +895,9 @@ function guardarEdicionDesdeModal() {
         
         guardarGastos();
         
-        // --- ACTUALIZACION EN SEGUNDO PLANO ---
         renderizarGastosDelMes();
         actualizarResumenMensual();
         actualizarResumenHistorico();
-        // -------------------------------------
 
         cerrarModal();
         mostrarToast(TRADUCTIONS[config.idioma].alertGuardado, 'success');
@@ -1198,9 +1199,7 @@ function actualizarGraficoCategorias(l, c, i) {
     const labels = Object.keys(d).sort((a,b) => d[b] - d[a]);
     const data = labels.map(k=>d[k]);
     
-    // --- CAMBIO: PALETA DE COLORES RESTAURADA A MULTICOLOR ---
     const bg=['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#8AC926', '#1982C4', '#6A4C93'];
-    // ---------------------------------------------------------
 
     if(i==='chartMensualInstance') {
         if(chartMensualInstance) chartMensualInstance.destroy();
