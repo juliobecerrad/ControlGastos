@@ -521,7 +521,12 @@ function cargarDatos() {
     
     document.getElementById('configMoneda').value = config.moneda;
     document.getElementById('configIdioma').value = config.idioma;
-    document.getElementById('gastoFecha').value = new Date().toISOString().split('T')[0];
+    
+    // --- CAMBIO SOLICITADO: USO DE HORA LOCAL EN LUGAR DE UTC ---
+    const hoy = new Date();
+    const fechaLocal = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+    document.getElementById('gastoFecha').value = fechaLocal;
+    // -----------------------------------------------------------
     
     actualizarSelectCategorias();
     renderizarTablaCategorias();
@@ -737,6 +742,11 @@ function actualizarResumenMensual() {
         document.getElementById('chartMensualContainer').style.display = 'none';
         listaDetalleActual = lista.filter(g => g.categoria === cat);
         paginaActual = 1;
+        
+        // Limpiar buscador al abrir categoría
+        document.getElementById('buscarDetalleMensual').value = '';
+        document.querySelector('#detalleMensual .pagination-controls').style.display = 'flex';
+        
         renderizarTablaDetallePaginada('tablaDetalleMensual', 'totalDetalleMensual', 'pageInfoMensual');
         document.getElementById('detalleCategoriaMensual').textContent = cat;
         
@@ -781,6 +791,10 @@ function actualizarResumenHistorico(resetCategoria = false) {
         if(filtroPagoHistorico !== 'TODOS') sub = sub.filter(g => g.tipoPago === filtroPagoHistorico);
         listaDetalleActual = sub;
         paginaActual = 1;
+        
+        // Limpiar buscador al abrir categoría
+        document.getElementById('buscarDetalleHistorico').value = '';
+        document.querySelector('#detalleHistorico .pagination-controls').style.display = 'flex';
         
         renderizarTablaDetallePaginada('tablaDetalleHistorico', 'totalDetalleHistorico', 'pageInfoHistorico');
         
@@ -953,22 +967,63 @@ function inicializarSelectoresMesAnio() {
     sh.value = hoy.getFullYear();
 }
 function actualizarSugerenciasDescripciones(l) { document.getElementById('sugerenciasDescripciones').innerHTML=l.map(d=>`<option value="${d}">`).join(''); }
-function filtrarTablaDetalle(i, t) {
-    const esDetallePaginado = t.includes('Detalle');
-    const v = document.getElementById(i).value.toLowerCase();
-    const rs = document.querySelectorAll(`#${t} tbody tr`);
-    let tot=0;
-    rs.forEach(r => {
-        if(r.textContent.toLowerCase().includes(v)) { 
-            r.style.display=''; 
-            if (!esDetallePaginado) tot+=parsearValor(r.cells[2].textContent.replace(config.moneda,'')); 
-        }
-        else r.style.display='none';
+
+// --- CAMBIO SOLICITADO: FILTRO INTELIGENTE CON SUMARIZACIÓN Y SIN PAGINACIÓN ---
+function filtrarTablaDetalle(inputId, tableId) {
+    const termino = document.getElementById(inputId).value.toLowerCase().trim();
+    const contenedor = document.getElementById(inputId).closest('div'); // Contenedor padre (detalleMensual o detalleHistorico)
+    const controlesPaginacion = contenedor.querySelector('.pagination-controls');
+    const tbody = document.getElementById(tableId).querySelector('tbody');
+    
+    // Identificar si es mensual o histórico para pasar los IDs correctos al restaurar paginación
+    const esMensual = tableId === 'tablaDetalleMensual';
+    const totalId = esMensual ? 'totalDetalleMensual' : 'totalDetalleHistorico';
+    const labelInfoId = esMensual ? 'pageInfoMensual' : 'pageInfoHistorico';
+
+    if (termino === '') {
+        // Restaurar paginación y vista normal
+        controlesPaginacion.style.display = 'flex';
+        renderizarTablaDetallePaginada(tableId, totalId, labelInfoId);
+        return;
+    }
+
+    // Ocultar controles de paginación mientras se busca
+    controlesPaginacion.style.display = 'none';
+
+    // Filtrar sobre la lista COMPLETA de la categoría (en memoria)
+    const filtrados = listaDetalleActual.filter(g => 
+        g.descripcion.toLowerCase().includes(termino) || 
+        g.fecha.includes(termino) || 
+        g.valor.toString().includes(termino)
+    );
+
+    // Renderizar TODOS los resultados filtrados
+    tbody.innerHTML = '';
+    let sumaFiltrada = 0;
+    
+    filtrados.forEach(g => {
+        sumaFiltrada += g.valor;
+        const tr = document.createElement('tr');
+        tr.onclick = () => abrirModalEdicion(g.id);
+        const [y, m, d] = g.fecha.split('-');
+        tr.innerHTML = `<td>${d}/${m}</td><td>${g.descripcion}</td><td class="gasto-valor">${formatearMoneda(g.valor)}</td>`;
+        tbody.appendChild(tr);
     });
-    if (!esDetallePaginado) {
-        document.querySelector(`#${t} tfoot .gasto-valor`).textContent = formatearMoneda(tot);
+
+    // Agregar fila de sumatoria del filtro (Visualmente antes del total general del tfoot)
+    const txtTotalFiltrado = config.idioma === 'es' ? 'Total Filtrado:' : 'Filtered Total:';
+    if (filtrados.length > 0) {
+        const trSum = document.createElement('tr');
+        trSum.style.backgroundColor = '#e0f2fe'; // Color suave para destacar
+        trSum.style.fontWeight = 'bold';
+        trSum.innerHTML = `<td colspan="2" style="text-align:right">${txtTotalFiltrado}</td><td class="gasto-valor" style="color:var(--primary-color)">${formatearMoneda(sumaFiltrada)}</td>`;
+        tbody.appendChild(trSum);
+    } else {
+        const txtNoResult = config.idioma === 'es' ? 'Sin coincidencias' : 'No matches';
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:20px; color:gray;">${txtNoResult}</td></tr>`;
     }
 }
+// --------------------------------------------------------------------------------
 
 // FUNCION CSV MEJORADA (v8.5)
 function generarYCompartirCSV(tipo) {
