@@ -1,20 +1,20 @@
 {
   "name": "Control de Gastos",
   "short_name": "Gastos",
-  "description": "Aplicación de control de gastos personales.",
-  "start_url": "./controlgastos.html",  // <--- CAMBIO AQUÍ (antes era controlgastos.html)
+  "start_url": "./controlgastos.html",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#007bff",
+  "background_color": "#F1F5F9",
+  "theme_color": "#1E3A8A",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "./icon-192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "./icon-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
