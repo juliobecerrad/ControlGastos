@@ -1077,8 +1077,6 @@ function filtrarTablaDetalle(inputId, tableId) {
     }
 }
 
-// --- FUNCIONES RESTAURADAS/CORREGIDAS SEGÚN INSTRUCCIONES ---
-
 async function compartirBackupJSON() {
     const txt = JSON.stringify({gastos_v2:gastos, config_v2:config}, null, 2);
     const now = new Date();
@@ -1226,6 +1224,18 @@ function actualizarGraficoGastosPorMes(l) {
                 y:{beginAtZero:true}
             }
         }
+    });
+}
+
+// --- REGISTRO DEL SERVICE WORKER (SW.JS) ---
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(registration => {
+                console.log('SW registrado con éxito:', registration.scope);
+            }, err => {
+                console.log('Fallo al registrar SW:', err);
+            });
     });
 }
 </script>
