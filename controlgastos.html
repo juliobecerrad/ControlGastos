@@ -701,10 +701,8 @@ function agregarGasto() {
 }
 
 function actualizarResumenMensual() {
-    // --- LÍNEAS AGREGADAS: RESETEAR VISTA DETALLE AL INICIO ---
     document.getElementById('detalleMensual').style.display = 'none';
     document.getElementById('chartMensualContainer').style.display = 'block';
-    // ---------------------------------------------------------
 
     const mes = document.getElementById('filtroMes').value;
     const anio = document.getElementById('filtroAnioMensual').value;
@@ -1079,112 +1077,74 @@ function filtrarTablaDetalle(inputId, tableId) {
     }
 }
 
-function generarYCompartirCSV(tipo) {
-    let nombreArchivo = '';
-    let datosFiltrados = [];
-    let titulo = '';
+// --- FUNCIONES RESTAURADAS/CORREGIDAS SEGÚN INSTRUCCIONES ---
 
-    if (tipo === 'mensual') {
-        const mes = document.getElementById('filtroMes').value;
-        const anio = document.getElementById('filtroAnioMensual').value;
-        const nombreMes = MONTH_NAMES_FULL[config.idioma][mes - 1];
-        datosFiltrados = gastos.filter(g => {
-            const [y, m] = g.fecha.split('-');
-            return parseInt(y) == anio && parseInt(m) == mes;
-        });
-        nombreArchivo = `Gastos_${nombreMes}_${anio}`;
-        titulo = `Reporte ${nombreMes} ${anio}`;
-    } else {
-        const anio = document.getElementById('filtroAnioHistorico').value;
-        datosFiltrados = gastos.filter(g => g.fecha.startsWith(anio));
-        nombreArchivo = `Gastos_${anio}`;
-        titulo = `Reporte ${anio}`;
-    }
-
-    if (datosFiltrados.length === 0) {
-        mostrarToast(TRADUCTIONS[config.idioma].alertNoExport, 'error');
-        return;
-    }
-
-    let csvContent = "\uFEFF";
-    csvContent += "Fecha;Categoría;Descripción;Valor;TipoPago\n";
-
-    datosFiltrados.forEach(g => {
-        let desc = g.descripcion.replace(/;/g, ",");
-        let valor = g.valor.toString();
-        if (config.idioma === 'es') {
-            valor = valor.replace('.', ',');
-        }
-        csvContent += `${g.fecha};${g.categoria};${desc};${valor};${g.tipoPago}\n`;
-    });
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const file = new File([blob], `${nombreArchivo}.csv`, { type: 'text/csv' });
-
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        navigator.share({
-            title: titulo,
-            text: `Adjunto ${titulo}`,
-            files: [file]
-        }).catch(console.error);
-    } else {
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `${nombreArchivo}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+async function compartirBackupJSON() {
+    const txt = JSON.stringify({gastos_v2:gastos, config_v2:config}, null, 2);
+    const now = new Date();
+    const fileName = `Backup_${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}.txt`;
+    const f = new File([new Blob([txt],{type:'text/plain'})], fileName, {type:'text/plain'});
+    descargar(f);
+    if(navigator.canShare && navigator.canShare({files:[f]})) {
+        try { setTimeout(async () => { await navigator.share({files:[f], title:'Backup', text: 'Backup'}); }, 500); } catch(e) {}
     }
 }
 
-function compartirBackupJSON() {
-    const dataStr = JSON.stringify(gastos, null, 2);
-    const blob = new Blob([dataStr], {type: "application/json"});
-    const fecha = new Date().toISOString().split('T')[0];
-    const nombreArchivo = `backup_gastos_${fecha}.json`;
-    const file = new File([blob], nombreArchivo, {type: "application/json"});
-
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        navigator.share({
-            title: 'Backup Gastos',
-            text: 'Copia de seguridad de gastos',
-            files: [file]
-        }).catch(console.error);
-    } else {
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = nombreArchivo;
-        link.click();
-    }
+function descargar(f){
+    const a=document.createElement('a'); 
+    a.href=URL.createObjectURL(f); 
+    a.download=f.name; 
+    document.body.appendChild(a); // Fix para móviles
+    a.click();
+    document.body.removeChild(a);
 }
 
-function importarDatos(event) {
-    const f = event.target.files[0];
-    if(!f) return;
+function importarDatos(e) {
+    const f = e.target.files[0]; if(!f) return;
     const r = new FileReader();
-    r.onload = (e) => {
+    r.onload = (ev) => {
         try {
-            const json = JSON.parse(e.target.result);
-            if(Array.isArray(json)) {
-                if(json.length > 0 && (!json[0].fecha || !json[0].valor)) throw new Error();
-                gastos = json; 
-                guardarGastos();
+            const d = JSON.parse(ev.target.result);
+            if(d.gastos_v2) { 
+                localStorage.setItem('gastos_v2', JSON.stringify(d.gastos_v2)); 
+                localStorage.setItem('config_v2', JSON.stringify(d.config_v2)); 
                 mostrarToast(TRADUCTIONS[config.idioma].alertImportSuccessJSON, 'success');
-                const btn = document.getElementById('btnImportarTrigger');
-                btn.innerHTML = `<i class="fas fa-check"></i> ${TRADUCTIONS[config.idioma].btnCargado}`;
                 setTimeout(() => { location.reload(); }, 1500);
             }
-        } catch {
-            mostrarToast(TRADUCTIONS[config.idioma].alertImportErrorJSON, 'error');
-        }
+        } catch { mostrarToast(TRADUCTIONS[config.idioma].alertImportErrorJSON, 'error'); }
+        e.target.value = '';
     };
     r.readAsText(f);
 }
 
-function confirmarLimpiarTodosLosDatos(){
-    mostrarModalConfirmacion(TRADUCTIONS[config.idioma].confirmDeleteAll, ()=>{localStorage.clear(); location.reload();});
+function confirmarLimpiarTodosLosDatos(){ 
+    mostrarModalConfirmacion(TRADUCTIONS[config.idioma].confirmDeleteAll, ()=>{localStorage.clear(); location.reload();}); 
+}
+
+function generarYCompartirCSV(tipo) {
+    let nombreArchivo = ''; let datosFiltrados = []; let titulo = '';
+    if (tipo === 'mensual') {
+        const m = document.getElementById('filtroMes').value; const a = document.getElementById('filtroAnioMensual').value;
+        datosFiltrados = gastos.filter(g => { const [y, mm] = g.fecha.split('-'); return parseInt(y) == a && parseInt(mm) == m; });
+        nombreArchivo = `Gastos_${MONTH_NAMES_FULL[config.idioma][m-1]}_${a}`; titulo = `Reporte ${MONTH_NAMES_FULL[config.idioma][m-1]} ${a}`;
+    } else {
+        const a = document.getElementById('filtroAnioHistorico').value;
+        datosFiltrados = gastos.filter(g => g.fecha.startsWith(a));
+        nombreArchivo = `Gastos_${a}`; titulo = `Reporte ${a}`;
+    }
+    if (!datosFiltrados.length) return mostrarToast(TRADUCTIONS[config.idioma].alertNoExport, 'error');
+    let csvContent = "\uFEFFFecha;Categoría;Descripción;Valor;TipoPago\n";
+    datosFiltrados.forEach(g => {
+        let desc = g.descripcion.replace(/;/g, ","); let valor = g.valor.toString();
+        if (config.idioma === 'es') valor = valor.replace('.', ',');
+        csvContent += `${g.fecha};${g.categoria};${desc};${valor};${g.tipoPago}\n`;
+    });
+    const f = new File([new Blob([csvContent], {type: 'text/csv;charset=utf-8;'})], `${nombreArchivo}.csv`, {type: 'text/csv'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; 
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    if (navigator.canShare && navigator.canShare({ files: [f] })) {
+        setTimeout(async () => { try { await navigator.share({ files: [f], title: 'Control de Gastos', text: titulo }); } catch (error) {} }, 500);
+    }
 }
 
 function actualizarGraficoCategorias(l, c, i) {
