@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gastos-app-v1';
+const CACHE_NAME = 'gastos-app-v2';
 const urlsToCache = [
   './',
   './controlgastos.html',
@@ -50,3 +50,4 @@ self.addEventListener('fetch', event => {
       })
   );
 });
+
